@@ -38,7 +38,7 @@ def get_args():
     return args
 
 
-def gen_frames(cap):
+def gen_frames(app):
     # Argument parsing #################################################################
     args = get_args()
 
@@ -53,6 +53,7 @@ def gen_frames(cap):
     use_brect = True
 
     # Camera preparation ###############################################################
+    cap = app.camera
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
@@ -143,8 +144,12 @@ def gen_frames(cap):
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
+                    app.log('Point gesture')
                 else:
                     point_history.append([0, 0])
+                
+                if hand_sign_id == 3:  # Like Gesture
+                    app.add_like()
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -177,6 +182,7 @@ def gen_frames(cap):
         # Screen reflection #############################################################
         # cv.imshow('Hand Gesture Recognition', debug_image)
 
+        #feed image to webserver
         ret, buffer = cv.imencode('.jpg', debug_image)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
