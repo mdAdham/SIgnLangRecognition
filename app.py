@@ -49,5 +49,9 @@ def index():
 def video_feed():
     return Response(gen_frames(App), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/game2048')
+def game2048():
+    return App.render(render_template('game2048.html'))
+
 if __name__ == "__main__":
     app.run(debug=True)

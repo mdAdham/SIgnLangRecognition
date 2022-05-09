@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- import game2048 css from static -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{url_for('static',filename='game2048.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="heading">
+        <h1 class="title">2048</h1>
+        <div class="score-container">0</div>
+      </div>
+      <p class="game-intro">
+        Join the numbers and get to the <strong>2048 tile!</strong>
+      </p>
+
+      <button
+        onclick="startGame()"
+        style="
+          border-radius: 10px;
+          background-color: #eee4da;
+          color: #776e65;
+          border: none;
+          padding: 5px 15px;
+        "
+      >
+        Start
+      </button>
+
+      <div class="game-container">
+        <div class="game-message">
+          <p></p>
+          <div class="lower">
+            <a class="retry-button">Try again</a>
+          </div>
+        </div>
+
+        <div class="grid-container">
+          <div class="grid-row">
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+          </div>
+          <div class="grid-row">
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+          </div>
+          <div class="grid-row">
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+          </div>
+          <div class="grid-row">
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+            <div class="grid-cell"></div>
+          </div>
+        </div>
+
+        <div class="tile-container"></div>
+      </div>
+
+      <p class="game-explanation">
+        <strong class="important">How to play:</strong> Use your
+        <strong>arrow keys</strong> to move the tiles. When two tiles with the
+        same number touch, they <strong>merge into one!</strong>
+      </p>
+      <hr />
+      <p>
+        Created by
+        <a href="http://gabrielecirulli.com" target="_blank"
+          >Gabriele Cirulli.</a
+        >
+        Based on
+        <a
+          href="https://itunes.apple.com/us/app/1024!/id823499224"
+          target="_blank"
+          >1024 by Veewo Studio</a
+        >
+        and conceptually similar to
+        <a href="http://asherv.com/threes/" target="_blank"
+          >Threes by Asher Vollmer.</a
+        >
+      </p>
+    </div>
+
+    <!-- import script game2048 from static -->
+    <script src="{{url_for('static',filename='game2048.js') }}"></script>
+  </body>
+</html>
