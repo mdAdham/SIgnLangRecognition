@@ -158,7 +158,7 @@ def gen_frames(app):
                 
                 if hand_sign_id == 0 and isLeftHand:  # Mouse gesture
                     app.updateMousePos(relativeX, relativeY)
-                elif hand_sign_id == 1 and app.prev_gesture != 1:  # Close gesture
+                elif hand_sign_id == 4 and app.prev_gesture != 4:  # Click gesture
                     #We use close gesture to simulate mouse click
                     app.mouseClick(relativeX, relativeY)
 
