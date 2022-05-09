@@ -1,0 +1,16 @@
+.body {
+  cursor: none;
+}
+.mouse {
+  width: 20px;
+  top: 0;
+  left: 0;
+  position: fixed;
+  pointer-events: none;
+}
+
+.video {
+  position: relative;
+  width: 50rem;
+  z-index: -2;
+}

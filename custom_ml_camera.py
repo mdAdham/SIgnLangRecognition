@@ -142,14 +142,25 @@ def gen_frames(app):
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                if hand_sign_id == 2:  # Point gesture
+
+                #get image size
+                image_width, image_height = debug_image.shape[1], debug_image.shape[0]
+
+                relativeX = landmark_list[8][0] / image_width
+                relativeY = landmark_list[8][1] / image_height
+
+                isLeftHand = handedness.classification[0].label[0] == 'L'
+
+                if hand_sign_id == 0: 
                     point_history.append(landmark_list[8])
-                    app.log('Point gesture')
                 else:
                     point_history.append([0, 0])
                 
-                if hand_sign_id == 3:  # Like Gesture
-                    app.add_like()
+                if hand_sign_id == 0 and isLeftHand:  # Mouse gesture
+                    app.updateMousePos(relativeX, relativeY)
+                elif hand_sign_id == 4 and app.prev_gesture != 4:  # Click gesture
+                    #We use close gesture to simulate mouse click
+                    app.mouseClick(relativeX, relativeY)
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -173,9 +184,13 @@ def gen_frames(app):
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
+
+                #add current gesture to history
+                app.set_prev_gesture(hand_sign_id)
         else:
             point_history.append([0, 0])
 
+        
         debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps)
 

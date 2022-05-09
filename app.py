@@ -11,13 +11,31 @@ class App():
     def __init__(self):
         self.camera = cv2.VideoCapture(0)
         self.num_like = 0
+        self.prev_gesture = None
 
     def log(self, msg):
         self.js.console.log(msg)
+
+    def set_prev_gesture(self, gesture):
+        self.prev_gesture = gesture
     
-    def add_like(self):
-        self.num_like += 1
-        self.js.document.getElementById("num-likes").innerHTML = "Likes: " + str(self.num_like)
+    def updateMousePos(self, percentage_x, percentage_y):
+        # Update the mouse position on the browser, convert the landmark location to be relative to the browser
+        browser_width = self.js.window.innerWidth
+        browser_height = self.js.window.innerHeight
+        x = int(percentage_x * int(browser_width))
+        y = int(percentage_y * int(browser_height))
+        self.js.document.getElementById("mouse").style.transform = "translate({x}px, {y}px)".format(x=x, y=y)
+    
+    def mouseClick(self, percentage_x, percentage_y):
+        # Update the mouse position on the browser, convert the landmark location to be relative to the browser
+        browser_width = self.js.window.innerWidth
+        browser_height = self.js.window.innerHeight
+        x = int(percentage_x * int(browser_width))
+        y = int(percentage_y * int(browser_height))
+        self.js.document.getElementById("mouse").display = "none"
+        self.js.mouseClick(x, y)
+        self.js.document.getElementById("mouse").display = "content"
 '''
 for ip camera use - rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp' 
 for local webcam use cv2.VideoCapture(0)
