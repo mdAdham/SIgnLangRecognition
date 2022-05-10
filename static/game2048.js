@@ -5,10 +5,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+var manager
 function startGame() {
     console.log("start game");
   window.requestAnimationFrame(function () {
-    var manager = new GameManager(4, KeyboardInputManager, HTMLActuator);
+    manager = new GameManager(4, KeyboardInputManager, HTMLActuator);
   });
 }
 function GameManager(size, InputManager, Actuator) {
@@ -151,6 +152,19 @@ GameManager.prototype.move = function (direction) {
     this.actuate();
   }
 };
+
+function moveUp() {
+  manager.move(0);
+}
+function moveRight() {
+  manager.move(1);
+}
+function moveDown() {
+  manager.move(2);
+}
+function moveLeft() {
+  manager.move(3);
+}
 
 // Get the vector representing the chosen direction
 GameManager.prototype.getVector = function (direction) {

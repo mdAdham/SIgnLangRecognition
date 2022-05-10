@@ -162,6 +162,18 @@ def gen_frames(app):
                     #We use close gesture to simulate mouse click
                     app.mouseClick(relativeX, relativeY)
 
+
+                # 2048 movement gesture
+                if app.js.manager != 0:
+                    if hand_sign_id == 5 and app.prev_gesture != 5:# move up gesture
+                        app.js.moveUp()
+                    elif hand_sign_id == 6 and app.prev_gesture != 6:# move left gesture
+                        app.js.moveLeft()
+                    elif hand_sign_id == 7 and app.prev_gesture != 7:# move right gesture
+                        app.js.moveRight()
+                    elif hand_sign_id == 8 and app.prev_gesture != 8:# move down gesture
+                        app.js.moveDown()
+
                 # Finger gesture classification
                 finger_gesture_id = 0
                 point_history_len = len(pre_processed_point_history_list)
