@@ -10,6 +10,7 @@ from collections import deque
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
+from phue import Bridge
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
@@ -31,7 +32,7 @@ def get_args():
                         help='min_tracking_confidence',
                         type=int,
                         default=0.5)
-
+    parser.add_argument("--ip_hue", type=str, default='192.168.178.60')
     args = parser.parse_args()
 
     return args
@@ -50,6 +51,11 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
 
     use_brect = True
+    ip_adress_hue = args.ip_hue
+
+    # Phillips Hue preparation ###############################################################
+    hue = Bridge(ip_adress_hue)
+    hue.connect()
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -103,9 +109,11 @@ def main():
         image.flags.writeable = False
         results = hands.process(image)
         image.flags.writeable = True
-
+        
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
+            smart_home_device=0
+            detected_left_hand=False
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
                 # Bounding box calculation
@@ -120,19 +128,36 @@ def main():
                 logging_csv(number, mode, pre_processed_landmark_list)
 
                 # Hand sign classification
+                handedness_side = handedness.classification[0].label[0:]
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                # if hand_sign_id == 2:  # Point gesture
-
+                hand_sign_class=keypoint_classifier_labels[hand_sign_id]
+                if handedness_side=="Left":
+                    if hand_sign_class=="One":
+                        smart_home_device=1
+                    elif hand_sign_class=="Two":
+                        smart_home_device=2
+                        print(smart_home_device)
+                    elif hand_sign_class=="Three":
+                        smart_home_device=3
+                    elif hand_sign_class=="Four":
+                        smart_home_device=4
+                    elif hand_sign_class=="Five":
+                        smart_home_device=5
+                if handedness_side=="Right":
+                    if hand_sign_class=="Ok":
+                        print(smart_home_device)
+                        hue.set_light(smart_home_device,'on', True)
+                   
+                   
                 # Drawing part
                 debug_image = draw_bounding_rect(use_brect, debug_image, brect)
                 debug_image = draw_landmarks(debug_image, landmark_list)
                 debug_image = draw_info_text(
                     debug_image,
                     brect,
-                    handedness,
-                    keypoint_classifier_labels[hand_sign_id],
+                    handedness_side,
+                    hand_sign_class,
                 )
-                
         debug_image = draw_info(debug_image, fps, mode, number)
 
         # Screen reflection #############################################################
@@ -424,21 +449,20 @@ def draw_bounding_rect(use_brect, image, brect):
     return image
 
 
-def draw_info_text(image, brect, handedness, hand_sign_text):
+def draw_info_text(image, brect, handedness_side, hand_sign_text):
     cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
                  (0, 0, 0), -1)
 
-    info_text = handedness.classification[0].label[0:]
     if hand_sign_text != "":
-        info_text = info_text + ':' + hand_sign_text
-    cv.putText(image, info_text, (brect[0] + 5, brect[1] - 4),
+        handedness_side = handedness_side + ':' + hand_sign_text
+    cv.putText(image, handedness_side, (brect[0] + 5, brect[1] - 4),
                cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
     return image
 
 
 def draw_info(image, fps, mode, number):
-    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-               1.0, (0, 0, 0), 4, cv.LINE_AA)
+    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_COMPLEX,
+               1, (255, 0, 0), 3, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
 
