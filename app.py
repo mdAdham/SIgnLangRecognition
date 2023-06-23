@@ -11,6 +11,7 @@ import cv2 as cv
 import numpy as np
 import mediapipe as mp
 from phue import Bridge
+import math
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier
@@ -120,7 +121,6 @@ def main():
                 brect = calc_bounding_rect(debug_image, hand_landmarks)
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
-
                 # Conversion to relative coordinates / normalized coordinates
                 pre_processed_landmark_list = pre_process_landmark(
                     landmark_list)
@@ -131,7 +131,7 @@ def main():
                 handedness_side = handedness.classification[0].label[0:]
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 hand_sign_class=keypoint_classifier_labels[hand_sign_id]
-                if handedness_side=="Right":
+                if handedness_side=="Left":
                     if hand_sign_class=="One":
                         smart_home_device=1
                     elif hand_sign_class=="Two":
@@ -143,10 +143,31 @@ def main():
                         smart_home_device=4
                     elif hand_sign_class=="Five":
                         smart_home_device=5
-                if handedness_side=="Left":
-                    print(smart_home_device)
+                if handedness_side=="Right":
                     if hand_sign_class=="Ok":
-                        hue.set_light(smart_home_device,'on', True)
+                        hue.set_light(2,'on', True)
+                    if hand_sign_class=="Control":  
+                        x1, y1 = landmark_list[4][0], landmark_list[4][1]
+                        x2, y2 = landmark_list[8][0], landmark_list[8][1]
+                        cx, cy = (x1 + x2)//2, (y1 + y2)//2
+
+                        cv.circle(debug_image, (x1, y1), 12, (255, 0, 255), cv.FILLED)
+                        cv.circle(debug_image, (x2, y2), 12, (255, 0, 255), cv.FILLED)
+                        cv.circle(debug_image, (cx, cy), 12, (255, 0, 255), cv.FILLED)
+                        cv.line(debug_image, (x1, y1), (x2, y2), (255, 0, 255), 3)
+                        
+                        length = math.hypot(x2 - x1, y2 - y1)
+                        print("length",length)
+                        
+                        #Hand range 30-150
+                        #Brightness ramge 0-254
+                        brightness=int(np.interp(length, [30,150],[1,254]))
+                        hue.set_light(2, 'bri', brightness)
+
+                        if length<30:
+                            cv.circle(debug_image, (cx, cy), 12, (0, 255, 0), cv.FILLED)
+
+
                    
                    
                 # Drawing part
