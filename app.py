@@ -131,7 +131,7 @@ def main():
                 handedness_side = handedness.classification[0].label[0:]
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 hand_sign_class=keypoint_classifier_labels[hand_sign_id]
-                if handedness_side=="Left":
+                if handedness_side=="Right":
                     if hand_sign_class=="One":
                         smart_home_device=1
                     elif hand_sign_class=="Two":
@@ -143,9 +143,9 @@ def main():
                         smart_home_device=4
                     elif hand_sign_class=="Five":
                         smart_home_device=5
-                if handedness_side=="Right":
+                if handedness_side=="Left":
+                    print(smart_home_device)
                     if hand_sign_class=="Ok":
-                        print(smart_home_device)
                         hue.set_light(smart_home_device,'on', True)
                    
                    
