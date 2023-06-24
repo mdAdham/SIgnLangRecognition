@@ -181,19 +181,19 @@ def main():
                     hand_sign_class,
                 )
 
-                if hand_sign_class == "Ok":
+                if hand_sign_class == "ThumpUp":
                     hue.set_light(smart_home_device, 'on', True)
+                if hand_sign_class == "ThumpDown":
+                    hue.set_light(smart_home_device, 'on', False)
                 elif hand_sign_class == "Control":
-                    length, lineInfo = calc_finger_distance(landmark_list, 4, 8)
-                    debug_image = draw_distance(debug_image, lineInfo, [255,0,255])
-
-                    # Hand range 30-150
-                    # Brightness range 0-254
-                    brightness = int(np.interp(length, [30, 150], [1, 254]))
+                    length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8)
+                    debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255])
+                    # Hand range 30-150 || Brightness range 0-254 || volume
+                    brightness = int(np.interp(length, [0.1, 0.9], [1, 254]))
                     hue.set_light(smart_home_device, 'bri', brightness)
 
                     if length < 30:
-                        debug_image = draw_distance(debug_image, [0,0,0,0,lineInfo[4], lineInfo[5]], [0,255,0])
+                        debug_image = draw_distance(debug_image, length, [0,0,0,0,pointCoordinates[4], pointCoordinates[5]], [0,255,0])
 
 
         debug_image = draw_info(debug_image, fps, mode, number)
@@ -250,12 +250,20 @@ def calc_landmark_list(image, landmarks):
 
     return landmark_point
 
-def calc_finger_distance(landmarks, f1, f2):
+def calc_finger_distance(landmarks, brect, f1, f2):
     x1, y1 = landmarks[f1][0], landmarks[f1][1]
     x2, y2 = landmarks[f2][0], landmarks[f2][1]
     cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
 
-    length = math.hypot(x2 - x1, y2 - y1)
+    bbox_width = brect[2] - brect[0]
+    bbox_height = brect[3] - brect[1]
+    x1_norm = (landmarks[f1][0] - brect[0]) / bbox_width
+    y1_norm = (landmarks[f1][1] - brect[1]) / bbox_height
+    x2_norm = (landmarks[f2][0] - brect[0]) / bbox_width
+    y2_norm = (landmarks[f2][1] - brect[1]) / bbox_height
+
+    length = math.hypot(x2_norm - x1_norm, y2_norm - y1_norm)
+    print(length)
 
     return length, [x1, y1, x2, y2, cx, cy]
 
@@ -296,11 +304,21 @@ def logging_csv(number, mode, landmark_list):
             writer.writerow([number, *landmark_list])
     return
 
-def draw_distance(image, lineInfo, rgb):
-    cv.circle(image, (lineInfo[0], lineInfo[1]), 12, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
-    cv.circle(image, (lineInfo[2], lineInfo[3]), 12, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
-    cv.circle(image, (lineInfo[4], lineInfo[5]), 12, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
-    cv.line(image, (lineInfo[0], lineInfo[1]), (lineInfo[2], lineInfo[3]), (rgb[0], rgb[1], rgb[2]), 3)
+def draw_distance(image, length, pointCoordinates, rgb):
+    if pointCoordinates[0]!=0 and pointCoordinates[1]!=0:
+        cv.circle(image, (pointCoordinates[0], pointCoordinates[1]), 10, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
+    if pointCoordinates[2]!=0 and pointCoordinates[3]!=0:
+        cv.circle(image, (pointCoordinates[2], pointCoordinates[3]), 10, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
+    if pointCoordinates[4]!=0 and pointCoordinates[5]!=0:
+        cv.circle(image, (pointCoordinates[4], pointCoordinates[5]), 10, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
+    if pointCoordinates[0]!=0 and pointCoordinates[1]!=0 and pointCoordinates[2]!=0 and pointCoordinates[3]!=0:
+        cv.line(image, (pointCoordinates[0], pointCoordinates[1]), (pointCoordinates[2], pointCoordinates[3]), (rgb[0], rgb[1], rgb[2]), 3)
+    lengthBar = int(np.interp(length, [0.1, 0.9], [400,150]))
+    lengthPer = int(np.interp(length, [0.1, 0.9], [0, 100]))
+    cv.rectangle(image, (50,150), (85,400), (255,0,0), 3)
+    cv.rectangle(image, (50, int(lengthBar)), (85,400), (255,0,0), cv.FILLED)
+    cv.putText(image, f'{int(lengthPer)}%', (40, 450), cv.FONT_HERSHEY_COMPLEX,
+               1, (255, 0, 0), 3)
     return image
 
 def draw_landmarks(image, landmark_point):
@@ -495,7 +513,7 @@ def draw_bounding_rect(use_brect, image, brect):
     if use_brect:
         # Outer rectangle
         cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[3]),
-                     (0, 0, 0), 1)
+                     (0, 0, 0), 2)
 
     return image
 
@@ -512,10 +530,8 @@ def draw_info_text(image, brect, handedness_side, hand_sign_text):
 
 
 def draw_info(image, fps, mode, number):
-    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_COMPLEX,
-               1, (255, 0, 0), 3, cv.LINE_AA)
-    cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
-               1.0, (255, 255, 255), 2, cv.LINE_AA)
+    cv.putText(image, f'FPS: {int(fps)}', (10, 30), cv.FONT_HERSHEY_COMPLEX,
+               1, (255, 0, 0), 3)
 
     mode_string = ['Logging Key Point', 'Logging Point History']
     if 1 <= mode <= 2:
