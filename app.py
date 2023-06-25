@@ -186,14 +186,13 @@ def main():
                 if hand_sign_class == "ThumpDown":
                     hue.set_light(smart_home_device, 'on', False)
                 elif hand_sign_class == "Control":
-                    length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8)
-                    debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255])
-                    # Hand range 30-150 || Brightness range 0-254 || volume
-                    brightness = int(np.interp(length, [0.1, 0.9], [1, 254]))
-                    hue.set_light(smart_home_device, 'bri', brightness)
-
-                    if length < 30:
-                        debug_image = draw_distance(debug_image, length, [0,0,0,0,pointCoordinates[4], pointCoordinates[5]], [0,255,0])
+                    length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
+                    debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
+                    if not calc_finger_up(landmark_list, 18, 20): #little finger
+                        # Hand range 30-150 || Brightness range 0-254 || volume
+                        brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
+                        hue.set_light(smart_home_device, 'bri', brightness)
+                        debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
 
 
         debug_image = draw_info(debug_image, fps, mode, number)
@@ -263,9 +262,20 @@ def calc_finger_distance(landmarks, brect, f1, f2):
     y2_norm = (landmarks[f2][1] - brect[1]) / bbox_height
 
     length = math.hypot(x2_norm - x1_norm, y2_norm - y1_norm)
-    print(length)
-
     return length, [x1, y1, x2, y2, cx, cy]
+
+def calc_finger_up(landmarks, f1, f2):
+    y1, y2 = landmarks[f1][1], landmarks[f2][1]
+    # pos = self.getPosition(img, (14,16), draw=False)
+    try:
+        if y1 >= y2:
+            print(True)
+            return True
+        elif y1 < y2:
+            print(False)
+            return False
+    except:
+        return "NO HAND FOUND"
 
 def pre_process_landmark(landmark_list):
     temp_landmark_list = copy.deepcopy(landmark_list)
@@ -304,7 +314,7 @@ def logging_csv(number, mode, landmark_list):
             writer.writerow([number, *landmark_list])
     return
 
-def draw_distance(image, length, pointCoordinates, rgb):
+def draw_distance(image, length, pointCoordinates, rgb, isSet):
     if pointCoordinates[0]!=0 and pointCoordinates[1]!=0:
         cv.circle(image, (pointCoordinates[0], pointCoordinates[1]), 10, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
     if pointCoordinates[2]!=0 and pointCoordinates[3]!=0:
@@ -313,12 +323,17 @@ def draw_distance(image, length, pointCoordinates, rgb):
         cv.circle(image, (pointCoordinates[4], pointCoordinates[5]), 10, (rgb[0], rgb[1], rgb[2]), cv.FILLED)
     if pointCoordinates[0]!=0 and pointCoordinates[1]!=0 and pointCoordinates[2]!=0 and pointCoordinates[3]!=0:
         cv.line(image, (pointCoordinates[0], pointCoordinates[1]), (pointCoordinates[2], pointCoordinates[3]), (rgb[0], rgb[1], rgb[2]), 3)
-    lengthBar = int(np.interp(length, [0.1, 0.9], [400,150]))
-    lengthPer = int(np.interp(length, [0.1, 0.9], [0, 100]))
-    cv.rectangle(image, (50,150), (85,400), (255,0,0), 3)
-    cv.rectangle(image, (50, int(lengthBar)), (85,400), (255,0,0), cv.FILLED)
+    lengthBar = int(np.interp(length, [0.15, 0.85], [400,150]))
+    smoothness = 5
+    lengthPer = smoothness * round(int(np.interp(length, [0.15, 0.85], [0, 100]))/smoothness)
+    if isSet == True:
+        rgb = [0,255,0]
+    else:
+        rgb = [255,0,0]
+    cv.rectangle(image, (50,150), (85,400), (rgb[0], rgb[1], rgb[2]), 3)
+    cv.rectangle(image, (50, int(lengthBar)), (85,400), (rgb[0], rgb[1], rgb[2]), cv.FILLED)
     cv.putText(image, f'{int(lengthPer)}%', (40, 450), cv.FONT_HERSHEY_COMPLEX,
-               1, (255, 0, 0), 3)
+               1, (rgb[0], rgb[1], rgb[2]), 3)
     return image
 
 def draw_landmarks(image, landmark_point):
