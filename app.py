@@ -193,7 +193,11 @@ def main():
                         brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
                         hue.set_light(smart_home_device, 'bri', brightness)
                         debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
-
+                elif hand_sign_class == "Rock":
+                    if not calc_finger_up(landmark_list, 6, 8): #index finger
+                        print("Zeigefinger")
+                    elif not calc_finger_up(landmark_list, 18, 20): #little finger
+                        print("Kleiner Finger")
 
         debug_image = draw_info(debug_image, fps, mode, number)
 
@@ -269,10 +273,8 @@ def calc_finger_up(landmarks, f1, f2):
     # pos = self.getPosition(img, (14,16), draw=False)
     try:
         if y1 >= y2:
-            print(True)
             return True
         elif y1 < y2:
-            print(False)
             return False
     except:
         return "NO HAND FOUND"
