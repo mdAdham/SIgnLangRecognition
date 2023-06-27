@@ -6,6 +6,7 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
+import time
 
 import cv2 as cv
 import numpy as np
@@ -33,7 +34,7 @@ def get_args():
                         help='min_tracking_confidence',
                         type=int,
                         default=0.5)
-    parser.add_argument("--max_num_hands", type=int, default=2)
+    parser.add_argument("--max_num_hands", type=int, default=10)
     parser.add_argument("--use_brect", type=bool, default=True)
     parser.add_argument("--ip_hue", type=str, default='192.168.178.60')
     args = parser.parse_args()
@@ -88,6 +89,12 @@ def main():
     #  ########################################################################
     mode = 0
 
+    smart_home_device = 0
+    detected_start_sign = False
+    start_timer = 0
+    duration_after_start = 6 # in seconds
+    detected_hand_id = None  # Variable to store the ID of the hand showing the "Shaka" sign
+    
     while True:
         fps = cvFpsCalc.get()
 
@@ -107,105 +114,96 @@ def main():
         # Detection implementation #############################################################
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         image.flags.writeable = False
-        results = hands.process(image)
+        hand_results = hands.process(image)
         image.flags.writeable = True
 
-        # Process detection results #############################################################
-        if results.multi_hand_landmarks is not None:
-            smart_home_device = 0
-            left_hand_landmarks = None 
-            right_hand_landmarks = None
+        # Process detection hand_results #############################################################
+        if hand_results.multi_hand_landmarks is not None:
+            if not detected_start_sign:
+                for hand_id, (hand_landmarks, handedness) in enumerate(
+                    zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness)
+                ):
+                    brect = calc_bounding_rect(debug_image, hand_landmarks)
+                    # Landmark calculation
+                    landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+                    # Conversion to relative coordinates / normalized coordinates
+                    pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                    hand_sign_class = keypoint_classifier_labels[keypoint_classifier(pre_processed_landmark_list)]
+                    if hand_sign_class == "Shaka":
+                        detected_start_sign = True
+                        start_timer = time.time()
+                        detected_hand_id = hand_id  # Store the ID of the hand showing the "Shaka" sign
+                        break
 
-            # Find landmarks for left and right hand (max one hand per side)
-            for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                if handedness.classification[0].label[0:] == "Left":
-                    left_hand_landmarks = hand_landmarks
-                elif handedness.classification[0].label[0:] == "Right":
-                    right_hand_landmarks = hand_landmarks
+            elif detected_start_sign and (time.time() - start_timer <= duration_after_start):
+                for hand_id, (hand_landmarks, handedness) in enumerate(
+                    zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness)
+                ):
+                    if hand_id == detected_hand_id:  # Process only the hand that showed the "Shaka" sign
+                        # Which hand_side
+                        hand_side = handedness.classification[0].label[0:]
+                        # Bounding box calculation
+                        brect = calc_bounding_rect(debug_image, hand_landmarks)
+                        # Landmark calculation
+                        landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+                        print("Hand:", landmark_list)
 
-            # Process left hand first
-            if left_hand_landmarks is not None:
-                # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, left_hand_landmarks)
-                # Landmark calculation
-                landmark_list = calc_landmark_list(debug_image, left_hand_landmarks)
-                # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(landmark_list)
-                # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list)
-                # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                hand_sign_class = keypoint_classifier_labels[hand_sign_id]
-                # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
-                debug_image = draw_info_text(
-                    debug_image,
-                    brect,
-                    "Left",
-                    hand_sign_class,
-                )
+                        # Conversion to relative coordinates / normalized coordinates
+                        pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                        # Write to the dataset file
+                        logging_csv(number, mode, pre_processed_landmark_list)
+                        # Hand sign classification
+                        hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                        hand_sign_class = keypoint_classifier_labels[hand_sign_id]
+                        # Drawing part
+                        debug_image = draw_bounding_rect(use_brect, debug_image, brect)
+                        debug_image = draw_landmarks(debug_image, landmark_list)
+                        debug_image = draw_info_text(
+                            debug_image,
+                            brect,
+                            hand_side,
+                            hand_sign_class,
+                        )
+                        if hand_sign_class == "One":
+                            smart_home_device = 1
+                        elif hand_sign_class == "Two":
+                            smart_home_device = 2
+                        elif hand_sign_class == "Three":
+                            smart_home_device = 3
+                        elif hand_sign_class == "Four":
+                            smart_home_device = 4
 
-                # Actions for specific classification
-                if hand_sign_class == "One":
-                    smart_home_device = 1
-                elif hand_sign_class == "Two":
-                    smart_home_device = 2
-                elif hand_sign_class == "Three":
-                    smart_home_device = 3
-                elif hand_sign_class == "Four":
-                    smart_home_device = 4
-                elif hand_sign_class == "Five":
-                    smart_home_device = 5
+                        if hand_sign_class == "ThumpUp":
+                            hue.set_light(smart_home_device, 'on', True)
+                        if hand_sign_class == "ThumpDown":
+                            hue.set_light(smart_home_device, 'on', False)
+                        elif hand_sign_class == "Control":
+                            length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
+                            debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
+                            if not calc_finger_up(landmark_list, 18, 20): #little finger
+                                # Hand range 30-150 || Brightness range 0-254 || volume
+                                brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
+                                hue.set_light(smart_home_device, 'bri', brightness)
+                                debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
+                        elif hand_sign_class == "Rock":
+                            if not calc_finger_up(landmark_list, 6, 8): #index finger
+                                hue.set_light(smart_home_device, 'effect', 'colorloop')
+                            elif not calc_finger_up(landmark_list, 18, 20): #little finger
+                                hue.set_light(smart_home_device, 'effect', 'none')
 
-            # Process right hand
-            if right_hand_landmarks is not None:
-                # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, right_hand_landmarks)
-                # Landmark calculation
-                landmark_list = calc_landmark_list(debug_image, right_hand_landmarks)
-                # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(landmark_list)
-                # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list)
-                # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                hand_sign_class = keypoint_classifier_labels[hand_sign_id]
-                # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
-                debug_image = draw_info_text(
-                    debug_image,
-                    brect,
-                    "Right",
-                    hand_sign_class,
-                )
 
-                if hand_sign_class == "ThumpUp":
-                    hue.set_light(smart_home_device, 'on', True)
-                if hand_sign_class == "ThumpDown":
-                    hue.set_light(smart_home_device, 'on', False)
-                elif hand_sign_class == "Control":
-                    length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
-                    debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
-                    if not calc_finger_up(landmark_list, 18, 20): #little finger
-                        # Hand range 30-150 || Brightness range 0-254 || volume
-                        brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
-                        hue.set_light(smart_home_device, 'bri', brightness)
-                        debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
-                elif hand_sign_class == "Rock":
-                    if not calc_finger_up(landmark_list, 6, 8): #index finger
-                        print("Zeigefinger")
-                    elif not calc_finger_up(landmark_list, 18, 20): #little finger
-                        print("Kleiner Finger")
+            else:
+                detected_start_sign = False
+                start_timer = 0
+                detected_hand_id = None
 
         debug_image = draw_info(debug_image, fps, mode, number)
-
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
 
     cap.release()
     cv.destroyAllWindows()
+
 
 
 def select_mode(key, mode):
@@ -270,7 +268,6 @@ def calc_finger_distance(landmarks, brect, f1, f2):
 
 def calc_finger_up(landmarks, f1, f2):
     y1, y2 = landmarks[f1][1], landmarks[f2][1]
-    # pos = self.getPosition(img, (14,16), draw=False)
     try:
         if y1 >= y2:
             return True
