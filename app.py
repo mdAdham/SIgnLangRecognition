@@ -93,7 +93,7 @@ def main():
     detected_start_sign = False
     start_timer = 0
     duration_after_start = 6 # in seconds
-    detected_hand_id = None  # Variable to store the ID of the hand showing the "Shaka" sign
+    detected_hands = {}  # Dictionary to store the IDs of the hands showing the specific sign
     
     while True:
         fps = cvFpsCalc.get()
@@ -119,28 +119,22 @@ def main():
 
         # Process detection hand_results #############################################################
         if hand_results.multi_hand_landmarks is not None:
-            if not detected_start_sign:
+            if len(detected_hands) <= 2:
                 for hand_id, (hand_landmarks, handedness) in enumerate(
                     zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness)
                 ):
-                    brect = calc_bounding_rect(debug_image, hand_landmarks)
-                    # Landmark calculation
-                    landmark_list = calc_landmark_list(debug_image, hand_landmarks)
-                    # Conversion to relative coordinates / normalized coordinates
-                    pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                    pre_processed_landmark_list = pre_process_landmark(calc_landmark_list(debug_image, hand_landmarks))
                     hand_sign_class = keypoint_classifier_labels[keypoint_classifier(pre_processed_landmark_list)]
                     if hand_sign_class == "Shaka":
-                        detected_start_sign = True
-                        start_timer = time.time()
-                        detected_hand_id = hand_id  # Store the ID of the hand showing the "Shaka" sign
+                        detected_hands[hand_id] = time.time() # Store the ID of the hand showing the "Shaka" sign
                         break
 
-            elif detected_start_sign and (time.time() - start_timer <= duration_after_start):
+            if len(detected_hands) != 0:
                 for hand_id, (hand_landmarks, handedness) in enumerate(
                     zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness)
                 ):
-                    if hand_id == detected_hand_id:  # Process only the hand that showed the "Shaka" sign
-                        # Which hand_side
+                    if hand_id in detected_hands and (time.time() - detected_hands[hand_id] <= duration_after_start):  # Process only the hands that showed the "Shaka" sign
+                        # Which hand side
                         hand_side = handedness.classification[0].label[0:]
                         # Bounding box calculation
                         brect = calc_bounding_rect(debug_image, hand_landmarks)
@@ -191,11 +185,8 @@ def main():
                             elif not calc_finger_up(landmark_list, 18, 20): #little finger
                                 hue.set_light(smart_home_device, 'effect', 'none')
 
-
-            else:
-                detected_start_sign = False
-                start_timer = 0
-                detected_hand_id = None
+                    elif hand_id in detected_hands and (time.time() - detected_hands[hand_id] > duration_after_start):
+                        del detected_hands[hand_id]
 
         debug_image = draw_info(debug_image, fps, mode, number)
         # Screen reflection #############################################################
