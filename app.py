@@ -90,8 +90,6 @@ def main():
     mode = 0
 
     smart_home_device = 0
-    detected_start_sign = False
-    start_timer = 0
     duration_after_start = 6 # in seconds
     detected_hands = {}  # Dictionary to store the IDs of the hands showing the specific sign
     
