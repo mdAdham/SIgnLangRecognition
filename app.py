@@ -11,7 +11,7 @@ import time
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
-from phue import Bridge
+from requests import post
 import math
 
 from utils import CvFpsCalc
@@ -36,7 +36,10 @@ def get_args():
                         default=0.5)
     parser.add_argument("--max_num_hands", type=int, default=10)
     parser.add_argument("--use_brect", type=bool, default=True)
-    parser.add_argument("--ip_hue", type=str, default='192.168.178.60')
+    parser.add_argument("--homeassistant_url", type=str, default='http://192.168.178.118:8123/')
+    parser.add_argument("--homeassistant_header", type=dict, default={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmZGU1YWQ5NjI1MDQ0NWE3YTI1NGRjYjM0NDAzYWU4MyIsImlhdCI6MTY4ODAzNjM0OSwiZXhwIjoyMDAzMzk2MzQ5fQ.s-GU1OqsLPW7HYo2ZkSGg6twERApfqIl7W0gjJraq20"})
+    parser.add_argument("--smart_home_devices", type=list, default=["light.deckenlampe", "light.haso_bett_led", "light.flur", "vacuum.ntelifamilyrobot", "select.siemens_ti9555x1de_68a40e325683_bsh_common_setting_powerstate"])
+
     args = parser.parse_args()
 
     return args
@@ -53,11 +56,9 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
     max_num_hands = args.max_num_hands
     use_brect = args.use_brect
-    ip_adress_hue = args.ip_hue
-
-    # Phillips Hue preparation ###############################################################
-    hue = Bridge(ip_adress_hue)
-    hue.connect()
+    homeassistant_url = args.homeassistant_url
+    homeassistant_header = args.homeassistant_header
+    smart_home_devices = args.smart_home_devices
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -89,7 +90,7 @@ def main():
     #  ########################################################################
     mode = 0
 
-    smart_home_device = 0
+    smart_home_entity = ""
     duration_after_start = 6 # in seconds
     detected_hands = {}  # Dictionary to store the IDs of the hands showing the specific sign
     
@@ -138,8 +139,6 @@ def main():
                         brect = calc_bounding_rect(debug_image, hand_landmarks)
                         # Landmark calculation
                         landmark_list = calc_landmark_list(debug_image, hand_landmarks)
-                        print("Hand:", landmark_list)
-
                         # Conversion to relative coordinates / normalized coordinates
                         pre_processed_landmark_list = pre_process_landmark(landmark_list)
                         # Write to the dataset file
@@ -157,34 +156,48 @@ def main():
                             hand_sign_class,
                         )
                         if hand_sign_class == "One":
-                            smart_home_device = 1
+                            smart_home_entity = smart_home_devices[0]
                         elif hand_sign_class == "Two":
-                            smart_home_device = 2
+                            smart_home_entity = smart_home_devices[1]
                         elif hand_sign_class == "Three":
-                            smart_home_device = 3
+                            smart_home_entity = smart_home_devices[2]
                         elif hand_sign_class == "Four":
-                            smart_home_device = 4
+                            smart_home_entity = smart_home_devices[3]
+                        elif hand_sign_class == "Five":
+                            smart_home_entity = smart_home_devices[4]
 
                         if hand_sign_class == "ThumpUp":
-                            hue.set_light(smart_home_device, 'on', True)
+                            api = homeassistant_url+"api/services/homeassistant/turn_on"
+                            data = {"entity_id": smart_home_entity}
+                            response = post(api, headers=homeassistant_header, json=data)
+                            print(response.text)
                         if hand_sign_class == "ThumpDown":
-                            hue.set_light(smart_home_device, 'on', False)
+                            api = homeassistant_url+"api/services/homeassistant/turn_off"
+                            data = {"entity_id": smart_home_entity}
+                            response = post(api, headers=homeassistant_header, json=data)
+                            print(response.text)
                         elif hand_sign_class == "Control":
                             length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
                             debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
                             if not calc_finger_up(landmark_list, 18, 20): #little finger
-                                # Hand range 30-150 || Brightness range 0-254 || volume
+                                # Hand range 30-150 || Brightness range 1-254
                                 brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
-                                hue.set_light(smart_home_device, 'bri', brightness)
+                                api = homeassistant_url+"api/services/homeassistant/turn_on"
+                                data = {"entity_id": smart_home_entity, "brightness": brightness}
+                                response = post(api, headers=homeassistant_header, json=data)
+                                print(response.text)
                                 debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
                         elif hand_sign_class == "Rock":
                             if not calc_finger_up(landmark_list, 6, 8): #index finger
-                                hue.set_light(smart_home_device, 'effect', 'colorloop')
+                                api = homeassistant_url+"/api/services/homeassistant/turn_on"
+                                data = {"entity_id": "light.haso_bett_led", "brightness": 254, "rgb_color": [255, 0, 0]}
                             elif not calc_finger_up(landmark_list, 18, 20): #little finger
-                                hue.set_light(smart_home_device, 'effect', 'none')
+                                hue.set_light(smart_home_entity, 'effect', 'none')
 
                     elif hand_id in detected_hands and (time.time() - detected_hands[hand_id] > duration_after_start):
                         del detected_hands[hand_id]
+            else:
+                smart_home_entity = ""
 
         debug_image = draw_info(debug_image, fps, mode, number)
         # Screen reflection #############################################################
