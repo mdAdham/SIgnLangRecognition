@@ -6,6 +6,7 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
+import random
 import time
 
 import cv2 as cv
@@ -155,27 +156,27 @@ def main():
                             hand_side,
                             hand_sign_class,
                         )
-                        if hand_sign_class == "One":
+                        if hand_sign_class == "Zero":
                             smart_home_entity = smart_home_devices[0]
-                        elif hand_sign_class == "Two":
+                        elif hand_sign_class == "One":
                             smart_home_entity = smart_home_devices[1]
-                        elif hand_sign_class == "Three":
+                        elif hand_sign_class == "Two":
                             smart_home_entity = smart_home_devices[2]
-                        elif hand_sign_class == "Four":
+                        elif hand_sign_class == "Three":
                             smart_home_entity = smart_home_devices[3]
-                        elif hand_sign_class == "Five":
+                        elif hand_sign_class == "Four":
                             smart_home_entity = smart_home_devices[4]
+                        elif hand_sign_class == "Five":
+                            smart_home_entity = smart_home_devices[5]
 
                         if hand_sign_class == "ThumpUp":
                             api = homeassistant_url+"api/services/homeassistant/turn_on"
-                            data = {"entity_id": smart_home_entity}
-                            response = post(api, headers=homeassistant_header, json=data)
-                            print(response.text)
-                        if hand_sign_class == "ThumpDown":
+                            data = {"entity_id": smart_home_entity, "rgb_color": [0, 0, 255]}
+                            post(api, headers=homeassistant_header, json=data)
+                        elif hand_sign_class == "ThumpDown":
                             api = homeassistant_url+"api/services/homeassistant/turn_off"
                             data = {"entity_id": smart_home_entity}
-                            response = post(api, headers=homeassistant_header, json=data)
-                            print(response.text)
+                            post(api, headers=homeassistant_header, json=data)
                         elif hand_sign_class == "Control":
                             length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
                             debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
@@ -184,15 +185,18 @@ def main():
                                 brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
                                 api = homeassistant_url+"api/services/homeassistant/turn_on"
                                 data = {"entity_id": smart_home_entity, "brightness": brightness}
-                                response = post(api, headers=homeassistant_header, json=data)
-                                print(response.text)
+                                post(api, headers=homeassistant_header, json=data)
                                 debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
                         elif hand_sign_class == "Rock":
                             if not calc_finger_up(landmark_list, 6, 8): #index finger
-                                api = homeassistant_url+"/api/services/homeassistant/turn_on"
-                                data = {"entity_id": "light.haso_bett_led", "brightness": 254, "rgb_color": [255, 0, 0]}
+                                api = homeassistant_url+"api/services/homeassistant/turn_on"
+                                random_rgb = [random.randint(0, 255) for _ in range(3)]
+                                data = {"entity_id": smart_home_entity, "rgb_color": random_rgb}
+                                post(api, headers=homeassistant_header, json=data)
                             elif not calc_finger_up(landmark_list, 18, 20): #little finger
-                                hue.set_light(smart_home_entity, 'effect', 'none')
+                                api = homeassistant_url+"api/services/homeassistant/turn_on"
+                                data = {"entity_id": smart_home_entity, "rgb_color": [255,255,255]}
+                                post(api, headers=homeassistant_header, json=data)
 
                     elif hand_id in detected_hands and (time.time() - detected_hands[hand_id] > duration_after_start):
                         del detected_hands[hand_id]
