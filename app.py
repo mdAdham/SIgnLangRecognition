@@ -40,7 +40,7 @@ def get_args():
     parser.add_argument("--use_brect", type=bool, default=True)
     parser.add_argument("--homeassistant_url", type=str, default='http://192.168.178.118:8123/')
     parser.add_argument("--homeassistant_header", type=dict, default={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmZGU1YWQ5NjI1MDQ0NWE3YTI1NGRjYjM0NDAzYWU4MyIsImlhdCI6MTY4ODAzNjM0OSwiZXhwIjoyMDAzMzk2MzQ5fQ.s-GU1OqsLPW7HYo2ZkSGg6twERApfqIl7W0gjJraq20"})
-    parser.add_argument("--smart_home_devices", type=list, default=["light.deckenlampe", "light.haso_bett_led", "light.flur", "vacuum.ntelifamilyrobot", "select.siemens_ti9555x1de_68a40e325683_bsh_common_setting_powerstate"])
+    parser.add_argument("--smart_home_devices", type=list, default=["vacuum.ntelifamilyrobot", "light.deckenlampe", "light.haso_bett_led", "light.flur", "media_player.imrans_echo_dot", "select.siemens_ti9555x1de_68a40e325683_bsh_common_setting_powerstate"])
 
     args = parser.parse_args()
 
