@@ -7,6 +7,7 @@ import itertools
 from collections import Counter
 from collections import deque
 import random
+import re
 import time
 
 import cv2 as cv
@@ -57,8 +58,6 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
     max_num_hands = args.max_num_hands
     use_brect = args.use_brect
-    homeassistant_url = args.homeassistant_url
-    homeassistant_header = args.homeassistant_header
     smart_home_devices = args.smart_home_devices
 
     # Camera preparation ###############################################################
@@ -91,10 +90,10 @@ def main():
     #  ########################################################################
     mode = 0
 
-    smart_home_entity = ""
+    smart_home_entity = "."
     duration_after_start = 6 # in seconds
     detected_hands = {}  # Dictionary to store the IDs of the hands showing the specific sign
-    
+   
     while True:
         fps = cvFpsCalc.get()
 
@@ -168,40 +167,13 @@ def main():
                             smart_home_entity = smart_home_devices[4]
                         elif hand_sign_class == "Five":
                             smart_home_entity = smart_home_devices[5]
-
-                        if hand_sign_class == "ThumpUp":
-                            api = homeassistant_url+"api/services/homeassistant/turn_on"
-                            data = {"entity_id": smart_home_entity, "rgb_color": [0, 0, 255]}
-                            post(api, headers=homeassistant_header, json=data)
-                        elif hand_sign_class == "ThumpDown":
-                            api = homeassistant_url+"api/services/homeassistant/turn_off"
-                            data = {"entity_id": smart_home_entity}
-                            post(api, headers=homeassistant_header, json=data)
-                        elif hand_sign_class == "Control":
-                            length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
-                            debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
-                            if not calc_finger_up(landmark_list, 18, 20): #little finger
-                                # Hand range 30-150 || Brightness range 1-254
-                                brightness = int(np.interp(length, [0.15, 0.85], [1, 254]))
-                                api = homeassistant_url+"api/services/homeassistant/turn_on"
-                                data = {"entity_id": smart_home_entity, "brightness": brightness}
-                                post(api, headers=homeassistant_header, json=data)
-                                debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
-                        elif hand_sign_class == "Rock":
-                            if not calc_finger_up(landmark_list, 6, 8): #index finger
-                                api = homeassistant_url+"api/services/homeassistant/turn_on"
-                                random_rgb = [random.randint(0, 255) for _ in range(3)]
-                                data = {"entity_id": smart_home_entity, "rgb_color": random_rgb}
-                                post(api, headers=homeassistant_header, json=data)
-                            elif not calc_finger_up(landmark_list, 18, 20): #little finger
-                                api = homeassistant_url+"api/services/homeassistant/turn_on"
-                                data = {"entity_id": smart_home_entity, "rgb_color": [255,255,255]}
-                                post(api, headers=homeassistant_header, json=data)
+                        
+                        custom_perfom_action(hand_sign_class, smart_home_entity, debug_image, landmark_list, brect)
 
                     elif hand_id in detected_hands and (time.time() - detected_hands[hand_id] > duration_after_start):
                         del detected_hands[hand_id]
             else:
-                smart_home_entity = ""
+                smart_home_entity = "."
 
         debug_image = draw_info(debug_image, fps, mode, number)
         # Screen reflection #############################################################
@@ -210,7 +182,59 @@ def main():
     cap.release()
     cv.destroyAllWindows()
 
+def custom_perfom_action(hand_sign_class, smart_home_entity, debug_image, landmark_list, brect):
+    args = get_args()
+    homeassistant_url = args.homeassistant_url
+    homeassistant_header = args.homeassistant_header
+    smart_home_domain = re.match(r"^(.*?)\.", smart_home_entity).group(1)
 
+    homeassistant_api_turnon = homeassistant_url+"api/services/homeassistant/turn_on"
+    homeassistant_api_turnoff = homeassistant_url+"api/services/homeassistant/turn_off"
+    homeassistant_api_playmedia = homeassistant_url+"api/services/media_player/play_media"
+    if hand_sign_class == "ThumpUp":
+        if smart_home_domain == "light" or smart_home_domain == "vacuum" or smart_home_domain == "select":
+            data = {"entity_id": smart_home_entity}
+            post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
+        elif smart_home_domain == "media_player":
+            data = {"entity_id": smart_home_entity, "media_content_id": "Start", "media_content_type": "custom"}
+            post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
+    elif hand_sign_class == "ThumpDown":
+        if smart_home_domain == "light" or smart_home_domain == "vacuum" or smart_home_domain == "select":
+            data = {"entity_id": smart_home_entity}
+            post(homeassistant_api_turnoff, headers=homeassistant_header, json=data)
+        elif smart_home_domain == "media_player":
+            data = {"entity_id": smart_home_entity, "media_content_id": "Stop", "media_content_type": "custom"}
+            post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
+    elif hand_sign_class == "Control":
+        length, pointCoordinates = calc_finger_distance(landmark_list, brect, 4, 8) #thumbs to index finger
+        debug_image = draw_distance(debug_image, length, pointCoordinates, [255,0,255], False)
+        if not calc_finger_up(landmark_list, 18, 20): #little finger
+            debug_image = draw_distance(debug_image, length, pointCoordinates, [0,255,0], True)
+            if smart_home_domain == "light":
+                brightness = int(np.interp(length, [0.15, 0.85], [1, 254])) # Hand range 0.15-0.85 || Brightness range 1-254
+                data = {"entity_id": smart_home_entity, "brightness": brightness}
+                post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
+            elif smart_home_domain == "media_player":
+                volume = np.interp(length, [0.15, 0.85], [0.0, 1.0]) # Hand range 0.15-0.85 || Volume range 0.0 - 1.0
+                api = homeassistant_url+"api/services/media_player/volume_set"
+                data = {"entity_id": smart_home_entity, "volume_level": volume}
+                post(api, headers=homeassistant_header, json=data)
+    elif hand_sign_class == "Rock":
+        if not calc_finger_up(landmark_list, 6, 8): #index finger
+            if smart_home_domain == "light":
+                random_rgb = [random.randint(0, 255) for _ in range(3)]
+                data = {"entity_id": smart_home_entity, "rgb_color": random_rgb}
+                post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
+            elif smart_home_domain == "media_player":
+                data = {"entity_id": smart_home_entity, "media_content_id": "Next", "media_content_type": "custom"}
+                post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
+        elif not calc_finger_up(landmark_list, 18, 20): #little finger
+            if smart_home_domain == "light":
+                data = {"entity_id": smart_home_entity, "rgb_color": [255,255,255]}
+                post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
+            elif smart_home_domain == "media_player":
+                data = {"entity_id": smart_home_entity, "media_content_id": "Previous", "media_content_type": "custom"}
+                post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
 
 def select_mode(key, mode):
     number = -1
@@ -223,7 +247,6 @@ def select_mode(key, mode):
     if key == 104:  # h
         mode = 2
     return number, mode
-
 
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
