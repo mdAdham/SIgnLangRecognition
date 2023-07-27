@@ -226,14 +226,14 @@ def custom_perfom_action(hand_sign_class, smart_home_entity, debug_image, landma
                 data = {"entity_id": smart_home_entity, "rgb_color": random_rgb}
                 post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
             elif smart_home_domain == "media_player":
-                data = {"entity_id": smart_home_entity, "media_content_id": "Next", "media_content_type": "custom"}
+                data = {"entity_id": smart_home_entity, "media_content_id": "Spiele Musik", "media_content_type": "custom"}
                 post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
         elif not calc_finger_up(landmark_list, 18, 20): #little finger
             if smart_home_domain == "light":
                 data = {"entity_id": smart_home_entity, "rgb_color": [255,255,255]}
                 post(homeassistant_api_turnon, headers=homeassistant_header, json=data)
             elif smart_home_domain == "media_player":
-                data = {"entity_id": smart_home_entity, "media_content_id": "Previous", "media_content_type": "custom"}
+                data = {"entity_id": smart_home_entity, "media_content_id": "Spiele vorherige Musik", "media_content_type": "custom"}
                 post(homeassistant_api_playmedia, headers=homeassistant_header, json=data)
 
 def select_mode(key, mode):
