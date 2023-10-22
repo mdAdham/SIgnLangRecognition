@@ -1,4 +1,4 @@
-from application_mode import application_mode
+from application.application_mode import application_mode
 import numpy as np
 
 

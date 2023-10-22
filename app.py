@@ -8,14 +8,14 @@ import cv2 as cv
 import mediapipe as mp
 from attr import dataclass
 
-from application_mode import application_mode, select_mode
-from argument_parser import get_arguments
-from draw_overlays import draw_overlays_with_landmarks, draw_overlays
-from landmark_processor import calc_landmark_list, pre_process_landmark, pre_process_point_history
+from application.application_mode import application_mode, select_mode
+from infrastructure.argument_parser import get_arguments
+from infrastructure.draw.draw_overlays import draw_overlays_with_landmarks, draw_overlays
+from application.landmark_processor import calc_landmark_list, pre_process_landmark, pre_process_point_history
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
-from csv_client import log_to_csv, read_from_csv
+from infrastructure.model_data_source.csv_client import log_to_csv, read_from_csv
 
 
 def main():
