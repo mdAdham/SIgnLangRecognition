@@ -5,13 +5,14 @@ from collections import Counter
 from collections import deque
 
 import cv2 as cv
-import mediapipe as mp
 from attr import dataclass
 
 from application.application_mode import application_mode, select_mode
 from infrastructure.argument_parser import get_arguments
-from infrastructure.draw.draw_overlays import draw_overlays_with_landmarks, draw_overlays
-from application.landmark_processor import calc_landmark_list, pre_process_landmark, pre_process_point_history
+from infrastructure.openCV.draw.draw_overlays import draw_overlays_with_landmarks, draw_overlays
+from domain.landmark_processor import calc_landmark_list, pre_process_landmark, pre_process_point_history
+from infrastructure.mediapipe.hands_initializer import initialize_mediapipe_hands
+from infrastructure.openCV.video_capture.video_capture_initializer import initialize_video_capture
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
@@ -25,7 +26,7 @@ def main():
     use_bounding_rectangle = True
 
     # Camera preparation ###############################################################
-    capture = initialize_video_capture(arguments)
+    capture = initialize_video_capture(cv, arguments)
 
     # Model load #############################################################
     hands = initialize_mediapipe_hands(arguments)
@@ -125,22 +126,6 @@ def main():
 
     capture.release()
     cv.destroyAllWindows()
-
-
-def initialize_mediapipe_hands(arguments):
-    return mp.solutions.hands.Hands(
-        static_image_mode=arguments.use_static_image_mode,
-        max_num_hands=2,
-        min_detection_confidence=arguments.min_detection_confidence,
-        min_tracking_confidence=arguments.min_tracking_confidence,
-    )
-
-
-def initialize_video_capture(arguments):
-    capture = cv.VideoCapture(arguments.device)
-    capture.set(cv.CAP_PROP_FRAME_WIDTH, arguments.width)
-    capture.set(cv.CAP_PROP_FRAME_HEIGHT, arguments.height)
-    return capture
 
 
 @dataclass

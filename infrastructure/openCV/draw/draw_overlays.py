@@ -1,6 +1,6 @@
-from infrastructure.draw.draw_debug_messages import draw_bounding_rectangle, draw_info_text, calculate_bounding_rectangle, \
+from infrastructure.openCV.draw.draw_debug_messages import draw_bounding_rectangle, draw_info_text, calculate_bounding_rectangle, \
     draw_point_history, draw_statistics
-from infrastructure.draw.draw_hand_landmarks import draw_landmarks
+from infrastructure.openCV.draw.draw_hand_landmarks import draw_landmarks
 
 
 def draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness, keypoint_classifier_labels, landmark_list,
