@@ -12,8 +12,7 @@ import mediapipe as mp
 from attr import dataclass
 
 from application_mode import application_mode
-from draw_debug_messages import draw_point_history, draw_statistics
-from draw_overlays import draw_overlays_with_landmarks
+from draw_overlays import draw_overlays_with_landmarks, draw_overlays
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
@@ -169,8 +168,7 @@ def main():
         else:
             point_history.append([0, 0])
 
-        debug_image = draw_point_history(debug_image, point_history, cv)
-        debug_image = draw_statistics(debug_image, fps, mode, number, cv)
+        debug_image = draw_overlays(debug_image, fps, mode, number, point_history, cv)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
@@ -277,7 +275,6 @@ def logging_csv(number, mode, landmark_list, point_history_list):
 @dataclass
 class OverlayParams:
     cv: cv
-
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
-from draw_debug_messages import draw_bounding_rectangle, draw_info_text, calculate_bounding_rectangle
+from draw_debug_messages import draw_bounding_rectangle, draw_info_text, calculate_bounding_rectangle, \
+    draw_point_history, draw_statistics
 from draw_hand_landmarks import draw_landmarks
 
 
@@ -16,4 +17,10 @@ def draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness, keypoint
         point_history_classifier_labels[most_common_fg_id[0][0]],
         cv
     )
+    return debug_image
+
+
+def draw_overlays(debug_image, fps, mode, number, point_history, cv):
+    debug_image = draw_point_history(debug_image, point_history, cv)
+    debug_image = draw_statistics(debug_image, fps, mode, number, cv)
     return debug_image
