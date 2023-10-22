@@ -12,6 +12,7 @@ import cv2 as cv
 import numpy as np
 import mediapipe as mp
 
+from draw_overlays import draw_bounding_rectangle, calculate_bounding_rectangle
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
@@ -129,7 +130,7 @@ def main():
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
                 # Bounding box calculation
-                bounding_rectangle = calculate_bounding_rectangle(debug_image, hand_landmarks)
+                bounding_rectangle = calculate_bounding_rectangle(debug_image, hand_landmarks, np, cv)
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
@@ -165,7 +166,7 @@ def main():
                     finger_gesture_history).most_common()
 
                 # Drawing part
-                debug_image = draw_bounding_rect(use_bounding_rectangle, debug_image, bounding_rectangle)
+                debug_image = draw_bounding_rectangle(use_bounding_rectangle, debug_image, bounding_rectangle, cv)
                 debug_image = draw_landmarks(debug_image, landmark_list)
                 debug_image = draw_info_text(
                     debug_image,
@@ -198,24 +199,6 @@ def select_mode(key, mode):
     if key == 104:  # h
         mode = application_mode['LEARN_POINT_HISTORY']
     return number, mode
-
-
-def calculate_bounding_rectangle(image, landmarks):
-    image_width, image_height = image.shape[1], image.shape[0]
-
-    landmark_array = np.empty((0, 2), int)
-
-    for _, landmark in enumerate(landmarks.landmark):
-        landmark_x = min(int(landmark.x * image_width), image_width - 1)
-        landmark_y = min(int(landmark.y * image_height), image_height - 1)
-
-        landmark_point = [np.array((landmark_x, landmark_y))]
-
-        landmark_array = np.append(landmark_array, landmark_point, axis=0)
-
-    x, y, w, h = cv.boundingRect(landmark_array)
-
-    return [x, y, x + w, y + h]
 
 
 def calc_landmark_list(image, landmarks):
@@ -484,15 +467,6 @@ def draw_landmarks(image, landmark_point):
             cv.circle(image, (landmark[0], landmark[1]), 8, (255, 255, 255),
                       -1)
             cv.circle(image, (landmark[0], landmark[1]), 8, (0, 0, 0), 1)
-
-    return image
-
-
-def draw_bounding_rect(use_bounding_rectangle, image, bounding_rectangle):
-    if use_bounding_rectangle:
-        # Outer rectangle
-        cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]), (bounding_rectangle[2], bounding_rectangle[3]),
-                     (0, 0, 0), 1)
 
     return image
 
