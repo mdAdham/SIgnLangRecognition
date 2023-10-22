@@ -61,7 +61,7 @@ def main():
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
-        max_num_hands=1,
+        max_num_hands=2,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )
@@ -145,6 +145,9 @@ def main():
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
+                #Send Midi here
+                #I can get landmark id from here and calculate absolute distance from individual landmarks
+                #they can be mapped to midi messages, values etc.
 
                 # Finger gesture classification
                 finger_gesture_id = 0
