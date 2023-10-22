@@ -6,6 +6,7 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
+from enum import Enum
 
 import cv2 as cv
 import numpy as np
@@ -37,6 +38,8 @@ def get_args():
 
     return args
 
+
+application_mode = Enum('application_mode', ['PLAY', 'LEARN_KEY_POINTS', 'LEARN_POINT_HISTORY'])
 
 def main():
     # Argument parsing #################################################################
@@ -96,7 +99,7 @@ def main():
     finger_gesture_history = deque(maxlen=history_length)
 
     #  ########################################################################
-    mode = 0
+    mode = application_mode['PLAY']
 
     while True:
         fps = cvFpsCalc.get()
@@ -145,9 +148,9 @@ def main():
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
-                #Send Midi here
-                #I can get landmark id from here and calculate absolute distance from individual landmarks
-                #they can be mapped to midi messages, values etc.
+                # Send Midi here
+                # I can get landmark id from here and calculate absolute distance from individual landmarks
+                # they can be mapped to midi messages, values etc.
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -189,11 +192,11 @@ def select_mode(key, mode):
     if 48 <= key <= 57:  # 0 ~ 9
         number = key - 48
     if key == 110:  # n
-        mode = 0
+        mode = application_mode['PLAY']
     if key == 107:  # k
-        mode = 1
+        mode = application_mode['LEARN_KEY_POINTS']
     if key == 104:  # h
-        mode = 2
+        mode = application_mode['LEARN_POINT_HISTORY']
     return number, mode
 
 
@@ -284,12 +287,12 @@ def pre_process_point_history(image, point_history):
 def logging_csv(number, mode, landmark_list, point_history_list):
     if mode == 0:
         pass
-    if mode == 1 and (0 <= number <= 9):
+    if mode == application_mode['LEARN_KEY_POINTS'] and (0 <= number <= 9):
         csv_path = 'model/keypoint_classifier/keypoint.csv'
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *landmark_list])
-    if mode == 2 and (0 <= number <= 9):
+    if mode == application_mode['LEARN_POINT_HISTORY'] and (0 <= number <= 9):
         csv_path = 'model/point_history_classifier/point_history.csv'
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
@@ -530,9 +533,8 @@ def draw_info(image, fps, mode, number):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
 
-    mode_string = ['Logging Key Point', 'Logging Point History']
-    if 1 <= mode <= 2:
-        cv.putText(image, "MODE:" + mode_string[mode - 1], (10, 90),
+    if mode != application_mode['PLAY']:
+        cv.putText(image, "MODE:" + mode.name, (10, 90),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                    cv.LINE_AA)
         if 0 <= number <= 9:
