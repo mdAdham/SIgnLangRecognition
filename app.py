@@ -6,16 +6,14 @@ import argparse
 import itertools
 from collections import Counter
 from collections import deque
-from enum import Enum
 
 import cv2 as cv
-import numpy as np
 import mediapipe as mp
+from attr import dataclass
 
 from application_mode import application_mode
-from draw_debug_overlays import draw_bounding_rectangle, calculate_bounding_rectangle, draw_info_text, draw_point_history, \
-    draw_statistics
-from draw_hand_landmarks import draw_landmarks
+from draw_debug_messages import draw_point_history, draw_statistics
+from draw_overlays import draw_overlays_with_landmarks
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
@@ -58,9 +56,9 @@ def main():
     use_bounding_rectangle = True
 
     # Camera preparation ###############################################################
-    cap = cv.VideoCapture(cap_device)
-    cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-    cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+    capture = cv.VideoCapture(cap_device)
+    capture.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
+    capture.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
     # Model load #############################################################
     mp_hands = mp.solutions.hands
@@ -113,7 +111,7 @@ def main():
         number, mode = select_mode(key, mode)
 
         # Camera capture #####################################################
-        ret, image = cap.read()
+        ret, image = capture.read()
         if not ret:
             break
         image = cv.flip(image, 1)  # Mirror display
@@ -130,8 +128,6 @@ def main():
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
-                # Bounding box calculation
-                bounding_rectangle = calculate_bounding_rectangle(debug_image, hand_landmarks, np, cv)
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
@@ -163,20 +159,13 @@ def main():
 
                 # Calculates the gesture IDs in the latest detection
                 finger_gesture_history.append(finger_gesture_id)
-                most_common_fg_id = Counter(
-                    finger_gesture_history).most_common()
 
                 # Drawing part
-                debug_image = draw_bounding_rectangle(use_bounding_rectangle, debug_image, bounding_rectangle, cv)
-                debug_image = draw_landmarks(debug_image, landmark_list, cv)
-                debug_image = draw_info_text(
-                    debug_image,
-                    bounding_rectangle,
-                    handedness,
-                    keypoint_classifier_labels[hand_sign_id],
-                    point_history_classifier_labels[most_common_fg_id[0][0]],
-                    cv
-                )
+                debug_image = draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
+                                                           keypoint_classifier_labels, landmark_list,
+                                                           Counter(finger_gesture_history).most_common(),
+                                                           point_history_classifier_labels, use_bounding_rectangle,
+                                                           hand_landmarks, cv)
         else:
             point_history.append([0, 0])
 
@@ -186,7 +175,7 @@ def main():
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
 
-    cap.release()
+    capture.release()
     cv.destroyAllWindows()
 
 
@@ -283,6 +272,13 @@ def logging_csv(number, mode, landmark_list, point_history_list):
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
     return
+
+
+@dataclass
+class OverlayParams:
+    cv: cv
+
+
 
 if __name__ == '__main__':
     main()

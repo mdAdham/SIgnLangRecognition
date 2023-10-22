@@ -1,4 +1,5 @@
 from application_mode import application_mode
+import numpy as np
 
 
 def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle, cv):
@@ -11,7 +12,7 @@ def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle, c
     return image
 
 
-def calculate_bounding_rectangle(image, landmarks, np, cv):
+def calculate_bounding_rectangle(image, landmarks, cv):
     image_width, image_height = image.shape[1], image.shape[0]
 
     landmark_array = np.empty((0, 2), int)
