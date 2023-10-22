@@ -53,7 +53,7 @@ def main():
     min_detection_confidence = args.min_detection_confidence
     min_tracking_confidence = args.min_tracking_confidence
 
-    use_brect = True
+    use_bounding_rectangle = True
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -129,7 +129,7 @@ def main():
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
                 # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, hand_landmarks)
+                bounding_rectangle = calculate_bounding_rectangle(debug_image, hand_landmarks)
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
@@ -165,11 +165,11 @@ def main():
                     finger_gesture_history).most_common()
 
                 # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
+                debug_image = draw_bounding_rect(use_bounding_rectangle, debug_image, bounding_rectangle)
                 debug_image = draw_landmarks(debug_image, landmark_list)
                 debug_image = draw_info_text(
                     debug_image,
-                    brect,
+                    bounding_rectangle,
                     handedness,
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
@@ -200,7 +200,7 @@ def select_mode(key, mode):
     return number, mode
 
 
-def calc_bounding_rect(image, landmarks):
+def calculate_bounding_rectangle(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
 
     landmark_array = np.empty((0, 2), int)
@@ -488,10 +488,10 @@ def draw_landmarks(image, landmark_point):
     return image
 
 
-def draw_bounding_rect(use_brect, image, brect):
-    if use_brect:
+def draw_bounding_rect(use_bounding_rectangle, image, bounding_rectangle):
+    if use_bounding_rectangle:
         # Outer rectangle
-        cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[3]),
+        cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]), (bounding_rectangle[2], bounding_rectangle[3]),
                      (0, 0, 0), 1)
 
     return image
