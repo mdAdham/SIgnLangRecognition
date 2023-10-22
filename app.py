@@ -177,7 +177,7 @@ def main():
     cv.destroyAllWindows()
 
 
-def calc_landmark_list(image, landmarks):
+def calc_landmark_list(image, landmarks) -> list:
     image_width, image_height = image.shape[1], image.shape[0]
 
     landmark_point = []
@@ -193,7 +193,7 @@ def calc_landmark_list(image, landmarks):
     return landmark_point
 
 
-def pre_process_landmark(landmark_list):
+def pre_process_landmark(landmark_list: list) -> list:
     temp_landmark_list = copy.deepcopy(landmark_list)
 
     # Convert to relative coordinates
@@ -261,6 +261,7 @@ def log_to_csv(number, mode, landmark_list, point_history_list):
 
 @dataclass
 class OverlayParams:
+    image: cv.typing.MatLike
     cv: cv
 
 
