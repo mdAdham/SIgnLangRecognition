@@ -11,7 +11,7 @@ import cv2 as cv
 import mediapipe as mp
 from attr import dataclass
 
-from application_mode import application_mode
+from application_mode import application_mode, select_mode
 from draw_overlays import draw_overlays_with_landmarks, draw_overlays
 from utils import CvFpsCalc
 from model import KeyPointClassifier
@@ -136,8 +136,8 @@ def main():
                 pre_processed_point_history_list = pre_process_point_history(
                     debug_image, point_history)
                 # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list,
-                            pre_processed_point_history_list)
+                log_to_csv(number, mode, pre_processed_landmark_list,
+                           pre_processed_point_history_list)
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
@@ -175,19 +175,6 @@ def main():
 
     capture.release()
     cv.destroyAllWindows()
-
-
-def select_mode(key, mode):
-    number = -1
-    if 48 <= key <= 57:  # 0 ~ 9
-        number = key - 48
-    if key == 110:  # n
-        mode = application_mode['PLAY']
-    if key == 107:  # k
-        mode = application_mode['LEARN_KEY_POINTS']
-    if key == 104:  # h
-        mode = application_mode['LEARN_POINT_HISTORY']
-    return number, mode
 
 
 def calc_landmark_list(image, landmarks):
@@ -256,7 +243,7 @@ def pre_process_point_history(image, point_history):
     return temp_point_history
 
 
-def logging_csv(number, mode, landmark_list, point_history_list):
+def log_to_csv(number, mode, landmark_list, point_history_list):
     if mode == 0:
         pass
     if mode == application_mode['LEARN_KEY_POINTS'] and (0 <= number <= 9):
