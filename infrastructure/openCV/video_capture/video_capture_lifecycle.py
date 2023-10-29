@@ -1,25 +1,6 @@
-from dataclasses import dataclass
-
 import cv2 as cv
 
-
-@dataclass
-class Image:
-    image: cv.typing.MatLike
-
-    def lock(self):
-        self.image.flags.writeable = False
-        return self
-
-    def unlock(self):
-        self.image.flags.writeable = True
-        return self
-
-    def width(self) -> int:
-        return self.image.shape[1]
-
-    def height(self) -> int:
-        return self.image.shape[0]
+from application.opencv.Image import Image
 
 
 def initialize_video_capture(arguments) -> cv.VideoCapture:
@@ -40,3 +21,11 @@ def flip(image: Image) -> Image:
 
 def correct_color(flipped_image) -> Image:
     return Image(cv.cvtColor(flipped_image.image, cv.COLOR_BGR2RGB))
+
+
+def show_frame(debug_image_with_landmark_overlays):
+    cv.imshow('Hand Gesture Recognition', debug_image_with_landmark_overlays.image)
+
+
+def destroy_windows():
+    cv.destroyAllWindows()

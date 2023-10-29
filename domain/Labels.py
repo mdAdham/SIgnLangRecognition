@@ -9,6 +9,7 @@ class KeyPointLabel(Enum):
     PEACE = 4
     TEST = 5
     KOREAN_HEART = 6
+    KOREAN_RAGE = 7
 
 
 class PointHistoryLabel(Enum):

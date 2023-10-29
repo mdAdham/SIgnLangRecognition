@@ -1,9 +1,8 @@
-from infrastructure.model.Labels import KeyPointLabel, PointHistoryLabel
+from domain.Labels import KeyPointLabel, PointHistoryLabel
 from infrastructure.openCV.draw.draw_debug_messages import draw_bounding_rectangle, draw_info_text, \
     calculate_bounding_rectangle, \
     draw_point_history, draw_statistics
 from infrastructure.openCV.draw.draw_hand_landmarks import draw_landmarks
-import cv2 as cv
 
 from infrastructure.openCV.video_capture.video_capture_lifecycle import Image
 
