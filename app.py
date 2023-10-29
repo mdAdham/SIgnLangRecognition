@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import copy
+from dataclasses import dataclass
 
 from application.application_mode import select_mode
 from application.initialize_application import initialize_application
@@ -8,8 +8,7 @@ from infrastructure.mediapipe.process_image import process_image
 from infrastructure.openCV.Keys import get_key_press
 from domain.draw_overlays import draw_overlays_with_landmarks, draw_overlays
 from domain.landmark_processor import process_landmarks
-from infrastructure.openCV.video_capture.video_capture_lifecycle import read_image, \
-    flip, correct_color, show_frame, destroy_windows
+from infrastructure.openCV.video_capture.video_capture_lifecycle import read_image, show_frame, destroy_windows
 
 
 def main():
@@ -20,24 +19,16 @@ def main():
     while True:
         fps = cv_fps_calc.get()
 
-        # Process Key (ESC: end) #################################################
         key = get_key_press()
         if key == 27:  # ESC
             break
         number, mode = select_mode(key, mode)
-
-        # Camera capture #####################################################
         ret, image = read_image(capture)
         if not ret:
             break
-        flipped_image = flip(image)  # Mirror display
-        debug_image = copy.deepcopy(flipped_image)
+        processable_image, debug_image, ret = image.prepare()
+        results = process_image(hands, processable_image)
 
-        # Detection implementation #############################################################
-
-        results = process_image(hands, correct_color(flipped_image))
-
-        #  ####################################################################
         if results.multi_hand_landmarks is not None:
             hand_sign, handedness, landmark_list, finger_gesture, hand_landmarks = process_landmarks(
                 debug_image, finger_gesture_history,

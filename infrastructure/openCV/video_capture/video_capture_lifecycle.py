@@ -14,15 +14,6 @@ def read_image(capture) -> tuple[bool, Image]:
     ret, image = capture.read()
     return ret, Image(image)
 
-
-def flip(image: Image) -> Image:
-    return Image(cv.flip(image.image, 1))
-
-
-def correct_color(flipped_image) -> Image:
-    return Image(cv.cvtColor(flipped_image.image, cv.COLOR_BGR2RGB))
-
-
 def show_frame(debug_image_with_landmark_overlays):
     cv.imshow('Hand Gesture Recognition', debug_image_with_landmark_overlays.image)
 

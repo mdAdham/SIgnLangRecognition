@@ -18,6 +18,3 @@ class ApplicationMode(Enum):
     PLAY = 1
     LEARN_KEY_POINTS = 2
     LEARN_POINT_HISTORY = 3
-
-
-
