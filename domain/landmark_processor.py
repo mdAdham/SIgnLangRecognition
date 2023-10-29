@@ -2,7 +2,7 @@ import copy
 import itertools
 
 
-def calc_landmark_list(image, landmarks) -> list:
+def calculate_landmark_list(image, landmarks) -> list:
     image_width, image_height = image.shape[1], image.shape[0]
 
     landmark_point = []
@@ -45,8 +45,7 @@ def pre_process_landmark(landmark_list: list) -> list:
     return temp_landmark_list
 
 
-def pre_process_point_history(image, point_history):
-    image_width, image_height = image.shape[1], image.shape[0]
+def pre_process_point_history(image_width, image_height, point_history):
 
     temp_point_history = copy.deepcopy(point_history)
 

@@ -1,4 +1,4 @@
-from application.application_mode import application_mode
+from application.application_mode import ApplicationMode
 import numpy as np
 import cv2 as cv
 
@@ -67,7 +67,7 @@ def draw_statistics(image, fps, mode, number):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (255, 255, 255), 2, cv.LINE_AA)
 
-    if mode != application_mode['PLAY']:
+    if mode != ApplicationMode.PLAY:
         cv.putText(image, "MODE:" + mode.name, (10, 90),
                    cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                    cv.LINE_AA)
