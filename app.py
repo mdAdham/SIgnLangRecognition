@@ -34,11 +34,8 @@ def main():
         debug_image = copy.deepcopy(flipped_image)
 
         # Detection implementation #############################################################
-        color_corrected_image = correct_color(flipped_image)
 
-        color_corrected_image.lock()
-        results = process_image(hands, color_corrected_image)
-        color_corrected_image.unlock()
+        results = process_image(hands, correct_color(flipped_image))
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
