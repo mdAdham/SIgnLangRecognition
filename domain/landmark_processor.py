@@ -4,7 +4,7 @@ from collections import Counter
 
 from application.application_mode import ApplicationMode
 from application.keypoint_logger import log_point_history, log_key_points
-from domain.Labels import KeyPointLabel
+from domain.Labels import KeyPointLabel, PointHistoryLabel
 from domain.gesture_reader import read_gesture
 
 
@@ -52,7 +52,6 @@ def pre_process_landmark(landmark_list: list) -> list:
 
 
 def pre_process_point_history(image_width, image_height, point_history):
-
     temp_point_history = copy.deepcopy(point_history)
 
     # Convert to relative coordinates
@@ -88,18 +87,18 @@ def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier,
         match mode:
             case ApplicationMode.PLAY:
                 hand_sign: KeyPointLabel = read_gesture(finger_gesture_history, keypoint_classifier, landmark_list,
-                                            point_history, point_history_classifier, point_history_list,
-                                            pre_processed_landmark_list)
+                                                        point_history, point_history_classifier, point_history_list,
+                                                        pre_processed_landmark_list)
             case ApplicationMode.LEARN_POINT_HISTORY:
                 log_point_history(number, point_history_list)
                 hand_sign: KeyPointLabel = read_gesture(finger_gesture_history, keypoint_classifier, landmark_list,
-                                            point_history, point_history_classifier, point_history_list,
-                                            pre_processed_landmark_list)
+                                                        point_history, point_history_classifier, point_history_list,
+                                                        pre_processed_landmark_list)
             case ApplicationMode.LEARN_KEY_POINTS:
                 log_key_points(number, pre_processed_landmark_list)
                 hand_sign: KeyPointLabel = read_gesture(finger_gesture_history, keypoint_classifier, landmark_list,
-                                            point_history, point_history_classifier, point_history_list,
-                                            pre_processed_landmark_list)
+                                                        point_history, point_history_classifier, point_history_list,
+                                                        pre_processed_landmark_list)
 
-        return hand_sign, handedness, landmark_list, Counter(
-            finger_gesture_history).most_common(), hand_landmarks
+        return hand_sign, handedness, landmark_list, PointHistoryLabel(Counter(
+            finger_gesture_history).most_common()[0][0]), hand_landmarks

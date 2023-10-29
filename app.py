@@ -14,10 +14,11 @@ from infrastructure.openCV.video_capture.video_capture_lifecycle import read_ima
 
 def main():
     # Argument parsing #################################################################
-    capture, cvFpsCalc, finger_gesture_history, hands, keypoint_classifier, mode, point_history, point_history_classifier = initialize_application()
+    capture, cv_fps_calc, finger_gesture_history, \
+        hands, keypoint_classifier, mode, point_history, point_history_classifier = initialize_application()
 
     while True:
-        fps = cvFpsCalc.get()
+        fps = cv_fps_calc.get()
 
         # Process Key (ESC: end) #################################################
         key = get_key_press()
@@ -41,14 +42,14 @@ def main():
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
-            hand_sign, handedness, landmark_list, most_common_finger_gestures, hand_landmarks = process_landmarks(
+            hand_sign, handedness, landmark_list, finger_gesture, hand_landmarks = process_landmarks(
                 debug_image, finger_gesture_history,
                 keypoint_classifier,
                 point_history,
                 point_history_classifier, mode, number, results)
             debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign, handedness,
                                                                      landmark_list,
-                                                                     most_common_finger_gestures,
+                                                                     finger_gesture,
                                                                      hand_landmarks)
             debug_image_with_landmark_overlays = draw_overlays(debug_image_with_landmark, fps, mode, number,
                                                                point_history)
