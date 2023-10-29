@@ -29,22 +29,19 @@ def calculate_bounding_rectangle(image: Image, landmarks):
     return [x, y, x + w, y + h]
 
 
-def draw_info_text(image: cv.typing.MatLike, bounding_rectangle, handedness, hand_sign_text: str,
+def draw_info_text(image: cv.typing.MatLike, bounding_rectangle, chirality, hand_sign_text: str,
                    finger_gesture_text: str):
     cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]),
                  (bounding_rectangle[2], bounding_rectangle[1] - 22),
                  (0, 0, 0), -1)
 
-    info_text = handedness.classification[0].label[0:]
-    if hand_sign_text != "":
-        info_text = info_text + ':' + hand_sign_text
-    cv.putText(image, info_text, (bounding_rectangle[0] + 5, bounding_rectangle[1] - 4),
+    cv.putText(image, "".join([chirality, ':', hand_sign_text]), (bounding_rectangle[0] + 5, bounding_rectangle[1] - 4),
                cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
 
     if finger_gesture_text != "":
-        cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+        cv.putText(image, "".join(["Finger Gesture:", finger_gesture_text]), (10, 60),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
-        cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+        cv.putText(image, "".join(["Finger Gesture:" + finger_gesture_text]), (10, 60),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
 
