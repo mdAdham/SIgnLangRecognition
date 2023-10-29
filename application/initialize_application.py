@@ -16,4 +16,4 @@ def initialize_application():
 
     return initialize_video_capture(arguments), CvFpsCalc(buffer_len=10), deque(
         maxlen=history_length), initialize_mediapipe_hands(
-        arguments), KeyPointClassifier(), ApplicationMode.PLAY, deque(maxlen=history_length), PointHistoryClassifier()
+        arguments), KeyPointClassifier(), ApplicationMode.DEBUG, deque(maxlen=history_length), PointHistoryClassifier()

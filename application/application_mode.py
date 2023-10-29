@@ -11,6 +11,8 @@ def select_mode(key, mode):
         mode = ApplicationMode.LEARN_KEY_POINTS
     if key == 104:  # h
         mode = ApplicationMode.LEARN_POINT_HISTORY
+    if key == 109:
+        mode = ApplicationMode.DEBUG
     return number, mode
 
 
@@ -18,3 +20,4 @@ class ApplicationMode(Enum):
     PLAY = 1
     LEARN_KEY_POINTS = 2
     LEARN_POINT_HISTORY = 3
+    DEBUG = 4

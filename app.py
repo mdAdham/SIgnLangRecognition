@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 
-from application.application_mode import select_mode
+from application.application_mode import select_mode, ApplicationMode
 from application.initialize_application import initialize_application
 from domain.Labels import KeyPointLabel, PointHistoryLabel
 from domain.gesture_reader import read_gesture
@@ -55,21 +55,22 @@ def process_results(debug_image, finger_gesture_history, fps, keypoint_classifie
         landmark_list = calculate_landmark_list(debug_image.image, hand_landmarks)
         pre_processed_landmark_list = pre_process_landmark(landmark_list)
         point_history_list = pre_process_point_history(debug_image.width(), debug_image.height(),
-                                                   point_history)
-        hand_sign: KeyPointLabel = read_gesture(finger_gesture_history, keypoint_classifier, landmark_list,
-                                            point_history, point_history_classifier, point_history_list,
-                                            pre_processed_landmark_list)
-        finger_gesture = PointHistoryLabel(Counter(finger_gesture_history).most_common()[0][0])
-        debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign, chirality,
-                                                             landmark_list,
-                                                             finger_gesture,
-                                                             hand_landmarks)
-        debug_image_with_landmark_overlays = draw_overlays(debug_image_with_landmark, fps, mode, number,
                                                        point_history)
-        show_frame(debug_image_with_landmark_overlays)
+        hand_sign: KeyPointLabel = read_gesture(finger_gesture_history, keypoint_classifier, landmark_list,
+                                                point_history, point_history_classifier, point_history_list,
+                                                pre_processed_landmark_list)
+        finger_gesture = PointHistoryLabel(Counter(finger_gesture_history).most_common()[0][0])
+        if mode == ApplicationMode.DEBUG:
+            debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign, chirality,
+                                                                     landmark_list,
+                                                                     finger_gesture,
+                                                                     hand_landmarks)
+            debug_image_with_landmark_overlays = draw_overlays(debug_image_with_landmark, fps, mode, number,
+                                                               point_history)
+            show_frame(debug_image_with_landmark_overlays)
+        elif mode == ApplicationMode.PLAY:
+            print("todo: implement midi")
         log_data(mode, number, point_history_list, pre_processed_landmark_list)
-
-
 
 
 if __name__ == '__main__':
