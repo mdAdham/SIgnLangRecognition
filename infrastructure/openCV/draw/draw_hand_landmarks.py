@@ -1,7 +1,7 @@
 import cv2 as cv
 
 
-def draw_landmarks(image, landmark_point):
+def draw_landmarks(image: cv.typing.MatLike, landmark_point):
     if len(landmark_point) > 0:
         draw_thumb(image, landmark_point)
         draw_index(image, landmark_point)

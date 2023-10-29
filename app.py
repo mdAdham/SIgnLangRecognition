@@ -8,9 +8,10 @@ import cv2 as cv
 
 from application.application_mode import select_mode, ApplicationMode
 from infrastructure.argument_parser import get_arguments
+from infrastructure.openCV.Keys import get_key_press
 from infrastructure.openCV.draw.draw_overlays import draw_overlays_with_landmarks, draw_overlays
 from domain.landmark_processor import calculate_landmark_list, pre_process_landmark, pre_process_point_history
-from infrastructure.mediapipe.hands_initializer import initialize_mediapipe_hands
+from infrastructure.mediapipe.hands_initializer import initialize_mediapipe_hands, process_image
 from infrastructure.openCV.video_capture.video_capture_lifecycle import initialize_video_capture, read_image, \
     flip, correct_color
 from utils import CvFpsCalc
@@ -23,8 +24,6 @@ from infrastructure.model.data_source.csv_client import log_key_points_to_csv, \
 def main():
     # Argument parsing #################################################################
     arguments = get_arguments()
-
-    use_bounding_rectangle = True
 
     # Camera preparation ###############################################################
     capture = initialize_video_capture(arguments)
@@ -53,55 +52,60 @@ def main():
         fps = cvFpsCalc.get()
 
         # Process Key (ESC: end) #################################################
-        key = cv.waitKey(10)
+        key = get_key_press()
         if key == 27:  # ESC
             break
         number, mode = select_mode(key, mode)
 
         # Camera capture #####################################################
-        ret, color_corrected_image = read_image(capture)
+        ret, image = read_image(capture)
         if not ret:
             break
-        flipped_image = flip(color_corrected_image)  # Mirror display
+        flipped_image = flip(image)  # Mirror display
         debug_image = copy.deepcopy(flipped_image)
 
         # Detection implementation #############################################################
         color_corrected_image = correct_color(flipped_image)
 
         color_corrected_image.lock()
-        results = hands.process(color_corrected_image.image)
+        results = process_image(hands, color_corrected_image)
         color_corrected_image.unlock()
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
-            debug_image_with_landmark_overlays = process_landmarks(debug_image.image, finger_gesture_history,
-                                                                   keypoint_classifier,
-                                                                   point_history,
-                                                                   point_history_classifier, mode, number, results,
-                                                                   use_bounding_rectangle)
-            cv.imshow('Hand Gesture Recognition', debug_image_with_landmark_overlays)
+            hand_sign_id, handedness, landmark_list, most_common_finger_gestures, hand_landmarks = process_landmarks(
+                debug_image, finger_gesture_history,
+                keypoint_classifier,
+                point_history,
+                point_history_classifier, mode, number, results)
+            debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
+                                                                     landmark_list,
+                                                                     most_common_finger_gestures,
+                                                                     hand_landmarks)
+            debug_image_with_landmark_overlays = draw_overlays(debug_image_with_landmark, fps, mode, number,
+                                                               point_history)
+            cv.imshow('Hand Gesture Recognition', debug_image_with_landmark_overlays.image)
 
         else:
             point_history.append([0, 0])
-            debug_image_with_overlays = draw_overlays(debug_image.image, fps, mode, number, point_history)
-            cv.imshow('Hand Gesture Recognition', debug_image_with_overlays)
+            debug_image_with_overlays = draw_overlays(debug_image, fps, mode, number, point_history)
+            cv.imshow('Hand Gesture Recognition', debug_image_with_overlays.image)
 
     capture.release()
     cv.destroyAllWindows()
 
 
 def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier,
-                      point_history, point_history_classifier, mode, number, results,
-                      use_bounding_rectangle):
+                      point_history, point_history_classifier, mode, number, results):
     for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                           results.multi_handedness):
         # Landmark calculation
-        landmark_list = calculate_landmark_list(debug_image, hand_landmarks)
+        landmark_list = calculate_landmark_list(debug_image.image, hand_landmarks)
 
         # Conversion to relative coordinates / normalized coordinates
         pre_processed_landmark_list = pre_process_landmark(landmark_list)
 
-        point_history_list = pre_process_point_history(debug_image.shape[1], debug_image.shape[0],
+        point_history_list = pre_process_point_history(debug_image.width(), debug_image.height(),
                                                        point_history)
         match mode:
             case ApplicationMode.PLAY:
@@ -119,11 +123,8 @@ def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier,
                                             point_history, point_history_classifier, point_history_list,
                                             pre_processed_landmark_list)
 
-        # Drawing part
-        return draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness, landmark_list,
-                                            Counter(finger_gesture_history).most_common(),
-                                            use_bounding_rectangle,
-                                            hand_landmarks)
+        return hand_sign_id, handedness, landmark_list, Counter(
+            finger_gesture_history).most_common(), hand_landmarks
 
 
 def read_gesture(finger_gesture_history, keypoint_classifier, landmark_list, point_history, point_history_classifier,
@@ -135,7 +136,6 @@ def read_gesture(finger_gesture_history, keypoint_classifier, landmark_list, poi
         point_history.append(landmark_list[8])
     else:
         point_history.append([0, 0])
-        # Send Midi here
         # I can get landmark id from here and calculate absolute distance from individual landmarks
         # they can be mapped to midi messages, values etc.
 

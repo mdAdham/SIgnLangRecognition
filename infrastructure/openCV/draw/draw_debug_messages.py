@@ -2,25 +2,23 @@ from application.application_mode import ApplicationMode
 import numpy as np
 import cv2 as cv
 
+from infrastructure.openCV.video_capture.video_capture_lifecycle import Image
 
-def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle):
-    if use_bounding_rectangle:
-        # Outer rectangle
-        cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]),
-                     (bounding_rectangle[2], bounding_rectangle[3]),
-                     (0, 0, 0), 1)
+
+def draw_bounding_rectangle(image, bounding_rectangle):
+    cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]),
+                 (bounding_rectangle[2], bounding_rectangle[3]),
+                 (0, 0, 0), 1)
 
     return image
 
 
-def calculate_bounding_rectangle(image, landmarks):
-    image_width, image_height = image.shape[1], image.shape[0]
-
+def calculate_bounding_rectangle(image: Image, landmarks):
     landmark_array = np.empty((0, 2), int)
 
     for _, landmark in enumerate(landmarks.landmark):
-        landmark_x = min(int(landmark.x * image_width), image_width - 1)
-        landmark_y = min(int(landmark.y * image_height), image_height - 1)
+        landmark_x = min(int(landmark.x * image.width()), image.width() - 1)
+        landmark_y = min(int(landmark.y * image.height()), image.height() - 1)
 
         landmark_point = [np.array((landmark_x, landmark_y))]
 
@@ -31,9 +29,10 @@ def calculate_bounding_rectangle(image, landmarks):
     return [x, y, x + w, y + h]
 
 
-def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text: str,
+def draw_info_text(image: cv.typing.MatLike, bounding_rectangle, handedness, hand_sign_text: str,
                    finger_gesture_text: str):
-    cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]), (bounding_rectangle[2], bounding_rectangle[1] - 22),
+    cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]),
+                 (bounding_rectangle[2], bounding_rectangle[1] - 22),
                  (0, 0, 0), -1)
 
     info_text = handedness.classification[0].label[0:]
@@ -52,7 +51,7 @@ def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text: str,
     return image
 
 
-def draw_point_history(image, point_history):
+def draw_point_history(image: cv.typing.MatLike, point_history):
     for index, point in enumerate(point_history):
         if point[0] != 0 and point[1] != 0:
             cv.circle(image, (point[0], point[1]), 1 + int(index / 2),
@@ -61,7 +60,7 @@ def draw_point_history(image, point_history):
     return image
 
 
-def draw_statistics(image, fps, mode, number):
+def draw_statistics(image: cv.typing.MatLike, fps, mode, number):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,

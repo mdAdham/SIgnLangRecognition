@@ -15,6 +15,12 @@ class Image:
         self.image.flags.writeable = True
         return self
 
+    def width(self) -> int:
+        return self.image.shape[1]
+
+    def height(self) -> int:
+        return self.image.shape[0]
+
 
 def initialize_video_capture(arguments) -> cv.VideoCapture:
     capture = cv.VideoCapture(arguments.device)
