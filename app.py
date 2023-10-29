@@ -16,7 +16,7 @@ from infrastructure.openCV.video_capture.video_capture_lifecycle import initiali
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
-from infrastructure.model.data_source.csv_client import read_from_csv, log_key_points_to_csv, \
+from infrastructure.model.data_source.csv_client import log_key_points_to_csv, \
     log_point_history_to_csv
 
 
@@ -35,9 +35,6 @@ def main():
     keypoint_classifier = KeyPointClassifier()
 
     point_history_classifier = PointHistoryClassifier()
-
-    # Read labels ###########################################################
-    keypoint_classifier_labels, point_history_classifier_labels = read_from_csv()
 
     # FPS Measurement ########################################################
     cvFpsCalc = CvFpsCalc(buffer_len=10)
@@ -78,8 +75,8 @@ def main():
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
             debug_image_with_landmark_overlays = process_landmarks(debug_image.image, finger_gesture_history,
-                                                                   keypoint_classifier, keypoint_classifier_labels,
-                                                                   point_history, point_history_classifier_labels,
+                                                                   keypoint_classifier,
+                                                                   point_history,
                                                                    point_history_classifier, mode, number, results,
                                                                    use_bounding_rectangle)
             cv.imshow('Hand Gesture Recognition', debug_image_with_landmark_overlays)
@@ -93,8 +90,8 @@ def main():
     cv.destroyAllWindows()
 
 
-def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier, keypoint_classifier_labels,
-                      point_history, point_history_classifier_labels, point_history_classifier, mode, number, results,
+def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier,
+                      point_history, point_history_classifier, mode, number, results,
                       use_bounding_rectangle):
     for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                           results.multi_handedness):
@@ -123,10 +120,9 @@ def process_landmarks(debug_image, finger_gesture_history, keypoint_classifier, 
                                             pre_processed_landmark_list)
 
         # Drawing part
-        return draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
-                                            keypoint_classifier_labels, landmark_list,
+        return draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness, landmark_list,
                                             Counter(finger_gesture_history).most_common(),
-                                            point_history_classifier_labels, use_bounding_rectangle,
+                                            use_bounding_rectangle,
                                             hand_landmarks)
 
 

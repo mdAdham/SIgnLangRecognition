@@ -31,8 +31,8 @@ def calculate_bounding_rectangle(image, landmarks):
     return [x, y, x + w, y + h]
 
 
-def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text,
-                   finger_gesture_text):
+def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text: str,
+                   finger_gesture_text: str):
     cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]), (bounding_rectangle[2], bounding_rectangle[1] - 22),
                  (0, 0, 0), -1)
 
