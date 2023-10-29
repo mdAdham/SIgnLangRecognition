@@ -12,7 +12,7 @@ from infrastructure.argument_parser import get_arguments
 from infrastructure.openCV.draw.draw_overlays import draw_overlays_with_landmarks, draw_overlays
 from domain.landmark_processor import calc_landmark_list, pre_process_landmark, pre_process_point_history
 from infrastructure.mediapipe.hands_initializer import initialize_mediapipe_hands
-from infrastructure.openCV.video_capture.video_capture_initializer import initialize_video_capture
+from infrastructure.openCV.video_capture.video_capture_lifecycle import initialize_video_capture
 from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
@@ -26,7 +26,7 @@ def main():
     use_bounding_rectangle = True
 
     # Camera preparation ###############################################################
-    capture = initialize_video_capture(cv, arguments)
+    capture = initialize_video_capture(arguments)
 
     # Model load #############################################################
     hands = initialize_mediapipe_hands(arguments)
@@ -76,56 +76,66 @@ def main():
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
-            for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
-                                                  results.multi_handedness):
-                # Landmark calculation
-                landmark_list = calc_landmark_list(debug_image, hand_landmarks)
-
-                # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(
-                    landmark_list)
-                pre_processed_point_history_list = pre_process_point_history(
-                    debug_image, point_history)
-                # Write to the dataset file
-                log_to_csv(number, mode, pre_processed_landmark_list,
-                           pre_processed_point_history_list)
-
-                # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                if hand_sign_id == 2:  # Point gesture
-                    point_history.append(landmark_list[8])
-                else:
-                    point_history.append([0, 0])
-                # Send Midi here
-                # I can get landmark id from here and calculate absolute distance from individual landmarks
-                # they can be mapped to midi messages, values etc.
-
-                # Finger gesture classification
-                finger_gesture_id = 0
-                point_history_len = len(pre_processed_point_history_list)
-                if point_history_len == (history_length * 2):
-                    finger_gesture_id = point_history_classifier(
-                        pre_processed_point_history_list)
-
-                # Calculates the gesture IDs in the latest detection
-                finger_gesture_history.append(finger_gesture_id)
-
-                # Drawing part
-                debug_image = draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
-                                                           keypoint_classifier_labels, landmark_list,
-                                                           Counter(finger_gesture_history).most_common(),
-                                                           point_history_classifier_labels, use_bounding_rectangle,
-                                                           hand_landmarks, cv)
+            debug_image = process_landmarks(debug_image, finger_gesture_history, history_length, keypoint_classifier,
+                                            keypoint_classifier_labels, mode, number, point_history,
+                                            point_history_classifier, point_history_classifier_labels, results,
+                                            use_bounding_rectangle)
         else:
             point_history.append([0, 0])
 
-        debug_image = draw_overlays(debug_image, fps, mode, number, point_history, cv)
+        debug_image = draw_overlays(debug_image, fps, mode, number, point_history)
 
         # Screen reflection #############################################################
         cv.imshow('Hand Gesture Recognition', debug_image)
 
     capture.release()
     cv.destroyAllWindows()
+
+
+def process_landmarks(debug_image, finger_gesture_history, history_length, keypoint_classifier,
+                      keypoint_classifier_labels, mode, number, point_history, point_history_classifier,
+                      point_history_classifier_labels, results, use_bounding_rectangle):
+    for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
+                                          results.multi_handedness):
+        # Landmark calculation
+        landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+
+        # Conversion to relative coordinates / normalized coordinates
+        pre_processed_landmark_list = pre_process_landmark(
+            landmark_list)
+        pre_processed_point_history_list = pre_process_point_history(
+            debug_image, point_history)
+        # Write to the dataset file
+        log_to_csv(number, mode, pre_processed_landmark_list,
+                   pre_processed_point_history_list)
+
+        # Hand sign classification
+        hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+        if hand_sign_id == 2:  # Point gesture
+            point_history.append(landmark_list[8])
+        else:
+            point_history.append([0, 0])
+        # Send Midi here
+        # I can get landmark id from here and calculate absolute distance from individual landmarks
+        # they can be mapped to midi messages, values etc.
+
+        # Finger gesture classification
+        finger_gesture_id = 0
+        point_history_len = len(pre_processed_point_history_list)
+        if point_history_len == (history_length * 2):
+            finger_gesture_id = point_history_classifier(
+                pre_processed_point_history_list)
+
+        # Calculates the gesture IDs in the latest detection
+        finger_gesture_history.append(finger_gesture_id)
+
+        # Drawing part
+        debug_image = draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
+                                                   keypoint_classifier_labels, landmark_list,
+                                                   Counter(finger_gesture_history).most_common(),
+                                                   point_history_classifier_labels, use_bounding_rectangle,
+                                                   hand_landmarks)
+    return debug_image
 
 
 @dataclass

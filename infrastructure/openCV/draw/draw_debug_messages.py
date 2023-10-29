@@ -1,8 +1,9 @@
 from application.application_mode import application_mode
 import numpy as np
+import cv2 as cv
 
 
-def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle, cv):
+def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle):
     if use_bounding_rectangle:
         # Outer rectangle
         cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]),
@@ -12,7 +13,7 @@ def draw_bounding_rectangle(use_bounding_rectangle, image, bounding_rectangle, c
     return image
 
 
-def calculate_bounding_rectangle(image, landmarks, cv):
+def calculate_bounding_rectangle(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
 
     landmark_array = np.empty((0, 2), int)
@@ -31,7 +32,7 @@ def calculate_bounding_rectangle(image, landmarks, cv):
 
 
 def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text,
-                   finger_gesture_text, cv):
+                   finger_gesture_text):
     cv.rectangle(image, (bounding_rectangle[0], bounding_rectangle[1]), (bounding_rectangle[2], bounding_rectangle[1] - 22),
                  (0, 0, 0), -1)
 
@@ -51,7 +52,7 @@ def draw_info_text(image, bounding_rectangle, handedness, hand_sign_text,
     return image
 
 
-def draw_point_history(image, point_history, cv):
+def draw_point_history(image, point_history):
     for index, point in enumerate(point_history):
         if point[0] != 0 and point[1] != 0:
             cv.circle(image, (point[0], point[1]), 1 + int(index / 2),
@@ -60,7 +61,7 @@ def draw_point_history(image, point_history, cv):
     return image
 
 
-def draw_statistics(image, fps, mode, number, cv):
+def draw_statistics(image, fps, mode, number):
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,
                1.0, (0, 0, 0), 4, cv.LINE_AA)
     cv.putText(image, "FPS:" + str(fps), (10, 30), cv.FONT_HERSHEY_SIMPLEX,

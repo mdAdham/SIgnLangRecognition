@@ -1,18 +1,21 @@
-def draw_landmarks(image, landmark_point, cv):
-    if len(landmark_point) > 0:
-        draw_thumb(cv, image, landmark_point)
-        draw_index(cv, image, landmark_point)
-        draw_middle_finger(cv, image, landmark_point)
-        draw_ring_finger(cv, image, landmark_point)
-        draw_little_finger(cv, image, landmark_point)
-        draw_palm(cv, image, landmark_point)
+import cv2 as cv
 
-    draw_hand_keypoints(cv, image, landmark_point)
+
+def draw_landmarks(image, landmark_point):
+    if len(landmark_point) > 0:
+        draw_thumb(image, landmark_point)
+        draw_index(image, landmark_point)
+        draw_middle_finger(image, landmark_point)
+        draw_ring_finger(image, landmark_point)
+        draw_little_finger(image, landmark_point)
+        draw_palm(image, landmark_point)
+
+    draw_hand_keypoints(image, landmark_point)
 
     return image
 
 
-def draw_hand_keypoints(cv, image, landmark_point):
+def draw_hand_keypoints(image, landmark_point):
     for index, landmark in enumerate(landmark_point):
         if index == 0:  # 手首1
             cv.circle(image, (landmark[0], landmark[1]), 5, (255, 255, 255),
@@ -100,7 +103,7 @@ def draw_hand_keypoints(cv, image, landmark_point):
             cv.circle(image, (landmark[0], landmark[1]), 8, (0, 0, 0), 1)
 
 
-def draw_palm(cv, image, landmark_point):
+def draw_palm(image, landmark_point):
     cv.line(image, tuple(landmark_point[0]), tuple(landmark_point[1]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[0]), tuple(landmark_point[1]),
@@ -131,7 +134,7 @@ def draw_palm(cv, image, landmark_point):
             (255, 255, 255), 2)
 
 
-def draw_little_finger(cv, image, landmark_point):
+def draw_little_finger(image, landmark_point):
     cv.line(image, tuple(landmark_point[17]), tuple(landmark_point[18]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[17]), tuple(landmark_point[18]),
@@ -146,7 +149,7 @@ def draw_little_finger(cv, image, landmark_point):
             (255, 255, 255), 2)
 
 
-def draw_ring_finger(cv, image, landmark_point):
+def draw_ring_finger(image, landmark_point):
     cv.line(image, tuple(landmark_point[13]), tuple(landmark_point[14]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[13]), tuple(landmark_point[14]),
@@ -161,7 +164,7 @@ def draw_ring_finger(cv, image, landmark_point):
             (255, 255, 255), 2)
 
 
-def draw_middle_finger(cv, image, landmark_point):
+def draw_middle_finger(image, landmark_point):
     cv.line(image, tuple(landmark_point[9]), tuple(landmark_point[10]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[9]), tuple(landmark_point[10]),
@@ -176,7 +179,7 @@ def draw_middle_finger(cv, image, landmark_point):
             (255, 255, 255), 2)
 
 
-def draw_index(cv, image, landmark_point):
+def draw_index(image, landmark_point):
     cv.line(image, tuple(landmark_point[5]), tuple(landmark_point[6]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[5]), tuple(landmark_point[6]),
@@ -191,7 +194,7 @@ def draw_index(cv, image, landmark_point):
             (255, 255, 255), 2)
 
 
-def draw_thumb(cv, image, landmark_point):
+def draw_thumb(image, landmark_point):
     cv.line(image, tuple(landmark_point[2]), tuple(landmark_point[3]),
             (0, 0, 0), 6)
     cv.line(image, tuple(landmark_point[2]), tuple(landmark_point[3]),
