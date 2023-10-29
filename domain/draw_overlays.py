@@ -7,7 +7,7 @@ from infrastructure.openCV.draw.draw_hand_landmarks import draw_landmarks
 from infrastructure.openCV.video_capture.video_capture_lifecycle import Image
 
 
-def draw_overlays_with_landmarks(image: Image, hand_sign_id, handedness, landmark_list,
+def draw_overlays_with_landmarks(image: Image, hand_sign: KeyPointLabel, handedness, landmark_list,
                                  most_common_fg_id,
                                  hand_landmarks) -> Image:
     bounding_rectangle = calculate_bounding_rectangle(image, hand_landmarks)
@@ -18,7 +18,7 @@ def draw_overlays_with_landmarks(image: Image, hand_sign_id, handedness, landmar
         image_with_landmarks,
         bounding_rectangle,
         handedness,
-        KeyPointLabel(hand_sign_id).name,
+        hand_sign.name,
         PointHistoryLabel(most_common_fg_id[0][0]).name,
     )
     return Image(image_with_info)

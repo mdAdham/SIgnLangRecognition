@@ -3,6 +3,8 @@
 import numpy as np
 import tensorflow as tf
 
+from domain.Labels import KeyPointLabel
+
 
 class KeyPointClassifier(object):
     def __init__(
@@ -33,4 +35,4 @@ class KeyPointClassifier(object):
 
         result_index = np.argmax(np.squeeze(result))
 
-        return result_index
+        return KeyPointLabel(result_index)

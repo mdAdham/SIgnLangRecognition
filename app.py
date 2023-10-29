@@ -41,12 +41,12 @@ def main():
 
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
-            hand_sign_id, handedness, landmark_list, most_common_finger_gestures, hand_landmarks = process_landmarks(
+            hand_sign, handedness, landmark_list, most_common_finger_gestures, hand_landmarks = process_landmarks(
                 debug_image, finger_gesture_history,
                 keypoint_classifier,
                 point_history,
                 point_history_classifier, mode, number, results)
-            debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign_id, handedness,
+            debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign, handedness,
                                                                      landmark_list,
                                                                      most_common_finger_gestures,
                                                                      hand_landmarks)

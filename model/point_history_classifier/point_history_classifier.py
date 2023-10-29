@@ -3,6 +3,8 @@
 import numpy as np
 import tensorflow as tf
 
+from domain.Labels import PointHistoryLabel
+
 
 class PointHistoryClassifier(object):
     def __init__(
@@ -41,4 +43,4 @@ class PointHistoryClassifier(object):
         if np.squeeze(result)[result_index] < self.score_th:
             result_index = self.invalid_value
 
-        return result_index
+        return PointHistoryLabel(result_index)
