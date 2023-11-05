@@ -60,7 +60,7 @@ def process_results(debug_image, finger_gesture_history, fps, keypoint_classifie
                                                 point_history, point_history_classifier, point_history_list,
                                                 pre_processed_landmark_list)
         finger_gesture = PointHistoryLabel(Counter(finger_gesture_history).most_common()[0][0])
-        if mode == ApplicationMode.DEBUG:
+        if mode == ApplicationMode.DEBUG or ApplicationMode.LEARN_KEY_POINTS or ApplicationMode.LEARN_POINT_HISTORY:
             debug_image_with_landmark = draw_overlays_with_landmarks(debug_image, hand_sign, chirality,
                                                                      landmark_list,
                                                                      finger_gesture,
@@ -68,9 +68,10 @@ def process_results(debug_image, finger_gesture_history, fps, keypoint_classifie
             debug_image_with_landmark_overlays = draw_overlays(debug_image_with_landmark, fps, mode, number,
                                                                point_history)
             show_frame(debug_image_with_landmark_overlays)
+            log_data(mode, number, point_history_list, pre_processed_landmark_list)
+
         elif mode == ApplicationMode.PLAY:
             print("todo: implement midi")
-        log_data(mode, number, point_history_list, pre_processed_landmark_list)
 
 
 if __name__ == '__main__':

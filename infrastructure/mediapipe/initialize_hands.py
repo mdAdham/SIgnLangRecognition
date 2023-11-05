@@ -1,7 +1,5 @@
 import mediapipe as mp
 
-from infrastructure.openCV.video_capture.video_capture_lifecycle import Image
-
 
 def initialize_mediapipe_hands(arguments) -> mp.solutions.hands.Hands:
     return mp.solutions.hands.Hands(
