@@ -2,7 +2,7 @@ import dataclasses
 
 import rtmidi
 from dataclasses import dataclass
-from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, CONTROL_CHANGE
+from rtmidi.midiconstants import NOTE_OFF, NOTE_ON, CONTROL_CHANGE, PROGRAM_CHANGE, SONG_START, SONG_STOP
 
 
 @dataclass
@@ -14,7 +14,7 @@ class Status:
 @dataclass
 class Data:
     first: int
-    second: int
+    second: int = None
 
 
 class Midi:
@@ -32,12 +32,12 @@ class Midi:
     def open_port(self, port_number: int) -> None:
         self.midi_out.open_port(port_number)
 
-    def send_message(self, status: Status, note: Data) -> None:
+    def send_message(self, status: Status, data: Data = None) -> None:
         self.midi_out.send_message(
             status.message_type,
             status.channel,
-            note.first,
-            note.second,
+            data.first,
+            data.second,
         )
 
     def send_control_change(self, data: Data) -> None:
@@ -45,3 +45,20 @@ class Midi:
             Status(CONTROL_CHANGE, self.channel),
             data,
         )
+
+    def send_program_change(self, program: int) -> None:
+        self.send_message(
+            Status(PROGRAM_CHANGE, self.channel),
+            Data(program)
+        )
+
+    def send_system_realtime_message(self, message: int) -> None:
+        self.send_message(
+            self.midi_out.send_message([message])
+        )
+
+    def start_song(self) -> None:
+        self.send_system_realtime_message(SONG_START)
+
+    def stop_song(self) -> None:
+        self.send_system_realtime_message(SONG_STOP)
