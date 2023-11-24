@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from dataclasses import dataclass
 
-from application.application_mode import select_mode, ApplicationMode
-from application.initialize_application import initialize_application
-from domain.Labels import KeyPointLabel, PointHistoryLabel
-from domain.gesture_reader import read_gesture
-from infrastructure.mediapipe.process_image import process_image
-from infrastructure.openCV.Keys import get_key_press
-from domain.draw_overlays import draw_overlays_with_landmarks, draw_overlays
-from domain.landmark_processor import calculate_landmark_list, pre_process_point_history, \
+from src.application.application_mode import select_mode, ApplicationMode
+from src.application.initialize_application import initialize_application
+from src.domain.Labels import KeyPointLabel, PointHistoryLabel
+from src.domain.gesture_reader import read_gesture
+from src.infrastructure.openCV.Keys import get_key_press
+from src.domain.draw_overlays import draw_overlays_with_landmarks, draw_overlays
+from src.domain.landmark_processor import calculate_landmark_list, pre_process_point_history, \
     pre_process_landmark, log_data
-from infrastructure.openCV.video_capture.video_capture_lifecycle import read_image, show_frame, destroy_windows
 from collections import Counter
 
 
 def main():
     # Argument parsing #################################################################
-    capture, cv_fps_calc, finger_gesture_history, \
-        hands, keypoint_classifier, mode, point_history, point_history_classifier = initialize_application()
+    video_capture, cv_fps_calc, \
+        hands, mode = initialize_application()
 
     while True:
         fps = cv_fps_calc.get()
@@ -27,12 +24,12 @@ def main():
         if key == 27:  # ESC
             break
         number, mode = select_mode(key, mode)
-        ret, image = read_image(capture)
+        ret, image = video_capture.get_frame()
         if not ret:
             break
         processable_image, debug_image = image.prepare()
         processable_image.image.flags.writeable = False
-        results = process_image(hands, processable_image)
+        results = hands.process_image(processable_image)
         processable_image.image.flags.writeable = True
 
         if results.multi_hand_landmarks is not None:
@@ -44,7 +41,7 @@ def main():
             debug_image_with_overlays = draw_overlays(debug_image, fps, mode, number, point_history)
             show_frame(debug_image_with_overlays)
 
-    capture.release()
+    video_capture.release()
     destroy_windows()
 
 

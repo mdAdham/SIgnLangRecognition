@@ -1,6 +1,6 @@
 import time
 
-from infrastructure.midi.Midi import Midi
+from src.infrastructure.midi.Midi import Midi
 
 midiout = Midi()
 available_ports = midiout.list_ports()
