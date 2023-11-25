@@ -1,7 +1,7 @@
 import numpy as np
 from src.application.application_mode import ApplicationMode
 from src.application.opencv.Image import Image
-from src.domain.Hands import Hand
+from src.domain.Hands import Hand, Knuckle
 from src.domain.Labels import FingerGestureLabel, HandSignLabel
 from src.infrastructure.openCV.draw.draw_hand_landmarks import draw_landmarks
 import cv2 as cv
@@ -22,15 +22,16 @@ class ScreenPrinter:
     ):
         image_array = image.image
         if hand is not None:
-            rectangle = self.calculate_bounding_rectangle(hand)
+            scaled_knuckles_as_np_array = self.scale_landmarks(image, hand.knuckles)
+            rectangle = self.calculate_bounding_rectangle(scaled_knuckles_as_np_array)
             image_array = self.draw_rectangle(image_array, rectangle)
-            image_array = self.draw_hand(image_array, hand)
+            image_array = self.draw_hand(image_array, scaled_knuckles_as_np_array)
             image_array = self.draw_info_text(image_array, hand, rectangle, hand_sign, finger_gesture)
         image_array = self.draw_point_history(image_array, point_history)
         image_array = self.draw_statistics(image_array, fps, mode, number)
         self.show_frame(image_array)
 
-    def draw_hand(self, image: np.ndarray, hand: Hand):
+    def draw_hand(self, image: np.ndarray, hand:  np.ndarray):
         return draw_landmarks(image, hand)
 
     def draw_rectangle(self, image: np.ndarray, bounding_rectangle: list):
@@ -38,15 +39,25 @@ class ScreenPrinter:
                             (bounding_rectangle[2], bounding_rectangle[3]),
                             (0, 0, 0), 1)
 
-    def calculate_bounding_rectangle(self, hand: Hand):
-        landmark_array = np.empty((0, 2), int)
+    def calculate_bounding_rectangle(self, scaled_hand: np.ndarray):
 
-        for knuckle in hand.knuckles:
-            landmark_array = np.append(landmark_array, [np.array((knuckle.x, knuckle.y))], axis=0)
-
-        x, y, w, h = cv.boundingRect(landmark_array)
+        x, y, w, h = cv.boundingRect(scaled_hand)
 
         return [x, y, x + w, y + h]
+
+    def scale_landmarks(self, image: Image, knuckles: list[Knuckle]) -> np.ndarray:
+        image_width, image_height = image.image.shape[1], image.image.shape[0]
+
+        landmark_array = np.empty((0, 2), int)
+
+        # Keypoint
+        for knuckle in knuckles:
+            landmark_x = min(int(knuckle.x * image_width), image_width - 1)
+            landmark_y = min(int(knuckle.y * image_height), image_height - 1)
+
+            landmark_array = np.append(landmark_array, [np.array((landmark_x, landmark_y))], axis=0)
+
+        return landmark_array
 
     def draw_info_text(self, image: np.ndarray, hand: Hand, bounding_rectangle, hand_sign: HandSignLabel,
                        finger_gesture: FingerGestureLabel):

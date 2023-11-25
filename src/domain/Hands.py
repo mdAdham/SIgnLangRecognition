@@ -10,9 +10,9 @@ class Chirality(Enum):
 
 @dataclass
 class Knuckle:
-    x: int
-    y: int
-    z: int = 0
+    x: float
+    y: float
+    z: float = 0.0
 
 
 
