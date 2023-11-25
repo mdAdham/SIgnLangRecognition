@@ -69,7 +69,7 @@ def pre_process_point_history(image_width, image_height, point_history):
     return temp_point_history
 
 
-def log_data(mode, number, point_history_list, pre_processed_landmark_list):
+def log_data(mode: ApplicationMode, number: int, point_history_list, pre_processed_landmark_list):
     match mode:
         case ApplicationMode.LEARN_POINT_HISTORY:
             log_point_history(number, point_history_list)

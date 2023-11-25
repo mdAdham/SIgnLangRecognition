@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 
-from src.domain.Labels import KeyPointLabel
+from src.domain.Labels import HandSignLabel
 
 
 class KeyPointClassifier(object):
@@ -35,4 +35,4 @@ class KeyPointClassifier(object):
 
         result_index = np.argmax(np.squeeze(result))
 
-        return KeyPointLabel(result_index)
+        return HandSignLabel(result_index)

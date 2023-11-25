@@ -1,4 +1,4 @@
-from src.domain.Labels import KeyPointLabel, PointHistoryLabel
+from src.domain.Labels import HandSignLabel, FingerGestureLabel
 from src.infrastructure.openCV.draw.draw_debug_messages import draw_bounding_rectangle, draw_info_text, \
     calculate_bounding_rectangle, \
     draw_point_history, draw_statistics
@@ -7,8 +7,8 @@ from src.infrastructure.openCV.draw.draw_hand_landmarks import draw_landmarks
 from src.infrastructure.openCV.video_capture.VideoCaptor import Image
 
 
-def draw_overlays_with_landmarks(image: Image, hand_sign: KeyPointLabel, chirality, landmark_list,
-                                 finger_gesture: PointHistoryLabel,
+def draw_overlays_with_landmarks(image: Image, hand_sign: HandSignLabel, chirality, landmark_list,
+                                 finger_gesture: FingerGestureLabel,
                                  hand_landmarks) -> Image:
     bounding_rectangle = calculate_bounding_rectangle(image, hand_landmarks)
 

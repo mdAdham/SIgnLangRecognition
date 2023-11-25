@@ -2,10 +2,12 @@ from dataclasses import dataclass
 import cv2 as cv
 import copy
 
+from numpy import ndarray
+
 
 @dataclass
 class Image:
-    image: cv.typing.MatLike
+    image: ndarray
 
     def prepare(self):
         flipped_image = self.flip()  # Mirror display

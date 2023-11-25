@@ -24,9 +24,11 @@ class HandsReader:
             min_tracking_confidence=min_tracking_confidence,
         )
 
-    def get_hands(self, image: Image) -> Hands:
+    def get_hands(self, image: Image) -> Hands | None:
         frame = self.hands.process(image.image)
         hands_list = []
+        if frame.multi_hand_landmarks is None:
+            return None
         for hand_landmarks, handednness in zip(frame.multi_hand_landmarks, frame.multi_handedness):
             hands_list.append(
                 Hand(

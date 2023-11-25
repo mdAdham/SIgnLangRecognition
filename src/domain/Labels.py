@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class KeyPointLabel(Enum):
+class HandSignLabel(Enum):
     OPEN = 0
     CLOSE = 1
     POINTER = 2
@@ -12,7 +12,7 @@ class KeyPointLabel(Enum):
     KOREAN_RAGE = 7
 
 
-class PointHistoryLabel(Enum):
+class FingerGestureLabel(Enum):
     STOP = 0
     CLOCKWISE = 1
     COUNTER_CLOCKWISE = 2
