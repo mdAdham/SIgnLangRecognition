@@ -46,4 +46,4 @@ class GestureReader:
                 self.point_history)
 
         self.gesture_history.append(finger_gesture_id)
-        return FingerGestureLabel(Counter(self.point_history).most_common()[0][0])
+        return FingerGestureLabel(Counter(self.gesture_history).most_common()[0][0])

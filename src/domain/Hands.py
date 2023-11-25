@@ -10,18 +10,10 @@ class Chirality(Enum):
 
 @dataclass
 class Knuckle:
-    x: float
-    y: float
-    z: float
+    x: int
+    y: int
+    z: int = 0
 
-    def __iter__(self):
-        self.a = 1
-        return self
-
-    def __next__(self):
-        x = self.a
-        self.a += 1
-        return x
 
 
 

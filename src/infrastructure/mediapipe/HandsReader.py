@@ -24,6 +24,21 @@ class HandsReader:
             min_tracking_confidence=min_tracking_confidence,
         )
 
+    def scale_landmarks(self, image: Image, landmarks):
+        image_width, image_height = image.image.shape[1], image.image.shape[0]
+
+        landmark_point = []
+
+        # Keypoint
+        for _, landmark in enumerate(landmarks):
+            landmark_x = min(int(landmark.x * image_width), image_width - 1)
+            landmark_y = min(int(landmark.y * image_height), image_height - 1)
+            # landmark_z = landmark.z
+
+            landmark_point.append([landmark_x, landmark_y])
+
+        return landmark_point
+
     def get_hands(self, image: Image) -> Hands | None:
         frame = self.hands.process(image.image)
         hands_list = []
@@ -33,8 +48,8 @@ class HandsReader:
             hands_list.append(
                 Hand(
                     list(map(
-                        lambda n: Knuckle(x=n.x, y=n.y, z=n.y),
-                        hand_landmarks.landmark)),
+                        lambda n: Knuckle(x=n[0], y=n[1]),
+                        self.scale_landmarks(image, hand_landmarks.landmark))),
                     Chirality(handednness.classification[0].label[0:])
                 )
             )

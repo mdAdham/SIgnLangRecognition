@@ -30,13 +30,11 @@ def main():
         if hands is not None:
 
             for hand in hands.hands_list:
-                # landmark_list = calculate_landmark_list(debug_image.image, hand_landmarks) # possibly still needed
-                # currently not implemented
                 hand_sign, finger_gesture = gesture_reader.read(hand)
 
                 if mode != ApplicationMode.PLAY:
                     screen_printer.print_screen(
-                        image, gesture_reader.point_history, mode, fps, number, hand, hand_sign, finger_gesture)
+                        debug_image, gesture_reader.point_history, mode, fps, number, hand, hand_sign, finger_gesture)
 
                     log_data(mode, number, gesture_reader.point_history, hand.prepare_for_model())
 
@@ -46,7 +44,7 @@ def main():
             gesture_reader.point_history.append([0, 0])
             if mode != ApplicationMode.PLAY:
                 screen_printer.print_screen(
-                    image, gesture_reader.point_history, mode, fps, number)
+                    debug_image, gesture_reader.point_history, mode, fps, number)
 
     video_capture.destroy_windows()
 
