@@ -19,19 +19,25 @@ class GestureReader:
         self.key_point_classifier = KeyPointClassifier(model_path=key_point_model_path)
         self.point_history_classifier = PointHistoryClassifier(model_path=point_history_model_path)
 
+    def read(self, hand: Hand) -> tuple[KeyPointLabel, PointHistoryLabel]:
+        hand_sign = self.read_hand_sign(hand)
+        self.append_point_history(hand, hand_sign)
+        finger_gesture = self.read_finger_gesture()
+        return hand_sign, finger_gesture
+
     def read_hand_sign(self,
                        hand: Hand,
                        ) -> KeyPointLabel:
 
-        hand_sign = self.key_point_classifier(hand.prepare_for_model())
+        return self.key_point_classifier(hand.prepare_for_model())
+
+    def append_point_history(self, hand, hand_sign):
         if hand_sign == KeyPointLabel.POINTER:
             self.point_history.append(hand.get_index())  # I suggest that this is magic number for index
         else:
             self.point_history.append([0, 0])
 
-        return hand_sign
-# todo: finger gesture relies on hand sign to be called before.
-    def read_finger_gesture(self, ) -> PointHistoryLabel:
+    def read_finger_gesture(self) -> PointHistoryLabel:
         finger_gesture_id = 0
         point_history_len = len(self.point_history)
         if point_history_len == (self.point_history.maxlen.real * 2):
