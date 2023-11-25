@@ -23,9 +23,9 @@ class HandsReaderTest(unittest.TestCase):
             point_history_model_path,
         )
 
-        hands = hands_reader.process_image(test_image)
+        hands = hands_reader.get_hands(test_image)
 
-        self.assertEqual(len(hands.hands_list[0].landmarks), 21)
+        self.assertEqual(len(hands.hands_list[0].knuckles), 21)
 
 if __name__ == '__main__':
     unittest.main()
