@@ -35,17 +35,17 @@ def main():
 
                 if mode != ApplicationMode.PLAY:
                     screen_printer.print_screen(
-                        debug_image, gesture_reader.point_history, mode, fps, number, hand, hand_sign, finger_gesture)
+                        debug_image, mode, fps, number, hand, hand_sign, finger_gesture)
 
-                    log_data(mode, number, gesture_reader.point_history, hand.prepare_for_model())
+                    log_data(mode, number, hand.point_history, hand.prepare_for_model())
 
                 elif mode == ApplicationMode.PLAY:
                     print("todo: implement midi")
         else:
-            gesture_reader.point_history.append(Knuckle(0, 0))
+            # gesture_reader.point_history.append(Knuckle(0, 0))
             if mode != ApplicationMode.PLAY:
                 screen_printer.print_screen(
-                    debug_image, gesture_reader.point_history, mode, fps, number)
+                    debug_image, mode, fps, number)
 
     video_capture.destroy_windows()
 

@@ -1,3 +1,5 @@
+from collections import deque
+
 import numpy as np
 from src.application.application_mode import ApplicationMode
 from src.application.opencv.Image import Image
@@ -12,7 +14,6 @@ class ScreenPrinter:
     def print_screen(
             self,
             image: Image,
-            point_history,
             mode: ApplicationMode,
             fps: int,
             number: int,
@@ -27,7 +28,7 @@ class ScreenPrinter:
             image_array = self.draw_rectangle(image_array, rectangle)
             image_array = self.draw_hand(image_array, scaled_knuckles_as_np_array)
             image_array = self.draw_info_text(image_array, hand, rectangle, hand_sign, finger_gesture)
-        image_array = self.draw_point_history(image_array, point_history)
+            image_array = self.draw_point_history(image_array, hand.point_history)
         image_array = self.draw_statistics(image_array, fps, mode, number)
         self.show_frame(image_array)
 
@@ -45,7 +46,7 @@ class ScreenPrinter:
 
         return [x, y, x + w, y + h]
 
-    def scale_landmarks(self, image: Image, knuckles: list[Knuckle]) -> np.ndarray:
+    def scale_landmarks(self, image: Image, knuckles: list[Knuckle] | deque) -> np.ndarray:
 
         landmark_array = np.empty((0, 2), int)
 
@@ -74,7 +75,7 @@ class ScreenPrinter:
 
         return image
 
-    def draw_point_history(self, image: np.ndarray, point_history: list[Knuckle]):
+    def draw_point_history(self, image: np.ndarray, point_history: deque):
         scaled_landmarks = self.scale_landmarks(Image(image), point_history)
         for index, point in enumerate(scaled_landmarks):
             if point[0] != 0 and point[1] != 0:

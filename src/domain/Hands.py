@@ -1,4 +1,5 @@
 import itertools
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 
@@ -18,10 +19,15 @@ class Knuckle:
 
 
 # https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
-@dataclass
 class Hand:
     knuckles: list[Knuckle]
     handedness: Chirality
+    history_length = 16
+    point_history: deque = deque(maxlen=history_length)
+
+    def __init__(self, knuckles: list[Knuckle], handedness: Chirality):
+        self.knuckles = knuckles
+        self.handedness = handedness
 
     def get_index(self) -> Knuckle:
         return self.knuckles[8]
@@ -52,6 +58,9 @@ class Hand:
 
     def prepare_for_model(self) -> list:
         return self.normalize(self.flatten_list(self.convert_to_relative_coordinates()))
+
+    def prepare_points_for_model(self) -> list:
+        return self.flatten_list(self.convert_to_relative_coordinates())
 
 
 @dataclass
