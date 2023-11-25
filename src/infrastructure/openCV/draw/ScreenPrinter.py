@@ -46,14 +46,13 @@ class ScreenPrinter:
         return [x, y, x + w, y + h]
 
     def scale_landmarks(self, image: Image, knuckles: list[Knuckle]) -> np.ndarray:
-        image_width, image_height = image.image.shape[1], image.image.shape[0]
 
         landmark_array = np.empty((0, 2), int)
 
         # Keypoint
         for knuckle in knuckles:
-            landmark_x = min(int(knuckle.x * image_width), image_width - 1)
-            landmark_y = min(int(knuckle.y * image_height), image_height - 1)
+            landmark_x = min(int(knuckle.x * image.width()), image.width() - 1)
+            landmark_y = min(int(knuckle.y * image.height()), image.height() - 1)
 
             landmark_array = np.append(landmark_array, [np.array((landmark_x, landmark_y))], axis=0)
 
@@ -75,8 +74,9 @@ class ScreenPrinter:
 
         return image
 
-    def draw_point_history(self, image: np.ndarray, point_history):
-        for index, point in enumerate(point_history):
+    def draw_point_history(self, image: np.ndarray, point_history: list[Knuckle]):
+        scaled_landmarks = self.scale_landmarks(Image(image), point_history)
+        for index, point in enumerate(scaled_landmarks):
             if point[0] != 0 and point[1] != 0:
                 cv.circle(image, point, 1 + int(index / 2),
                           (152, 251, 152), 2)

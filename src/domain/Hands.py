@@ -2,6 +2,8 @@ import itertools
 from dataclasses import dataclass
 from enum import Enum
 
+from numpy import ndarray
+
 
 class Chirality(Enum):
     LEFT = "Left"
@@ -13,8 +15,6 @@ class Knuckle:
     x: float
     y: float
     z: float = 0.0
-
-
 
 
 # https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
