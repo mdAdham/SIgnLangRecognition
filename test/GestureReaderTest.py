@@ -1,6 +1,8 @@
 import unittest
 
+from src.domain.Labels import KeyPointLabel
 from src.infrastructure.model.GestureReader import GestureReader
+from test.HandsStub import should_create_hands
 
 
 class GestureReaderTest(unittest.TestCase):
@@ -10,7 +12,10 @@ class GestureReaderTest(unittest.TestCase):
                                    point_history_model_path)
 
     def test_should_read_gesture(self):
-        self.assertEqual(True, False)  # add assertion here
+        given_hands = should_create_hands()
+        expected_gesture = KeyPointLabel.OPEN
+        actual_gesture = self.gesture_reader.read_hand_sign(given_hands.hands_list[0])
+        self.assertEqual(expected_gesture, actual_gesture)  # add assertion here
 
 
 if __name__ == '__main__':

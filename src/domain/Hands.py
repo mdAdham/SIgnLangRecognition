@@ -27,14 +27,14 @@ class Hand:
     def get_base(self) -> Knuckle:
         return self.knuckles[0]
 
-    def convert_to_relative_coordinates(self, relative_knuckle_list=None) -> list:
+    def convert_to_relative_coordinates(self) -> list:
+        relative_knuckle_list: list = []
         base_x, base_y = 0, 0
         for index, knuckle in enumerate(self.knuckles):
             if index == 0:
                 base_x, base_y = knuckle.x, knuckle.y
 
-            relative_knuckle_list[index][0] = knuckle.x - base_x
-            relative_knuckle_list[index][1] = knuckle.y - base_y
+            relative_knuckle_list.append([knuckle.x - base_x, knuckle.y - base_y])
         return relative_knuckle_list
 
     def flatten_list(self, knuckle_list) -> list:
