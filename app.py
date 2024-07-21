@@ -4,6 +4,7 @@ import csv
 import copy
 import argparse
 import itertools
+import time
 from collections import Counter
 from collections import deque
 
@@ -98,9 +99,46 @@ def main():
     #  ########################################################################
     mode = 0
 
-    while True:
-        fps = cvFpsCalc.get()
+    # initializing the hand gesture variable
+    oldHandGesture = None
 
+    # currently detected stage(if it doesnt start with T, it is not stage 2)
+    detectedStage = None
+
+    # if detectedStage and stage dont match, we come back to the top
+    incorrectStageFlag = 0
+
+    # if gesture is ever not detected
+    droppedGestureFlag = 0
+
+    # time elapsed
+    timeElapsedCounter = 0
+
+    # set stage
+    stage = 1
+
+    # stopwatch flag to indicate when to start and stop the stopwatch
+    stopwatchFlag = 0
+
+    #start and end of the stop watch timer
+    start = 0
+    end = 0
+
+    #start and stop penalty for the wrong stage
+    penaltyStart = 0
+    penaltyStop = 0
+
+    # stage 1 hand gesture
+    stageOneHandGesture = 0
+
+    # incorrect stage anti spam
+    antiSpamBuffer = 0
+
+    # while loop that grabs the frames from the camera input
+    # this portion is WHEN THE CAMERA IS ON
+    while True:
+        # gets fps
+        fps = cvFpsCalc.get()
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
         if key == 27:  # ESC
@@ -141,7 +179,7 @@ def main():
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                if hand_sign_id == 2:  # Point gesture
+                if hand_sign_id == "Not Applicable":  # Point gesture
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
@@ -168,8 +206,70 @@ def main():
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
+
+                # change in hand gesture code
+                if ((oldHandGesture != keypoint_classifier_labels[hand_sign_id]) and
+                        ((oldHandGesture or keypoint_classifier_labels[hand_sign_id]) is not None) and oldHandGesture is not False):
+                    print("There was a change in hand gesture from " + str(oldHandGesture) + " to " + str(keypoint_classifier_labels[hand_sign_id]))
+                    print("restarting counter at 0")
+                    #change in gesture causes a full reset of the counter
+                    start = 0
+                    end = 0
+                    stopwatchFlag = 0
+                    detectedStage = stage_detection(keypoint_classifier_labels, hand_sign_id)
+
+                    #if the change in gesture causes the stage and detected stage to be different, set the incorrect stage flag to be high
+                    if stage and detectedStage==0:
+                        incorrectStageFlag = 1
+
+                detectedStage = stage_detection(keypoint_classifier_labels, hand_sign_id)
+
+                #if the stages match, tell me they match, set the incorrect stage flag to low, and if the stopwatch hasnt started, start it by raising the stopwatchflag.
+                if detectedStage == stage:
+                    print("Gestures Match!")
+                    incorrectStageFlag = 0
+                    if stopwatchFlag == 0:
+                        stopwatchFlag = 1
+                        start = time.time()
+
+                    end = time.time()
+                    #keep track of the time of the stopwatch
+                    print(round(end-start,2))
+                    if (end - start) >= 3 and stage == 1:
+                        print("Gesture registered")
+                        stageOneHandGesture = keypoint_classifier_labels[hand_sign_id]
+                        stage = 2
+                        incorrectStageFlag = 0
+
+                    if (end - start) >= 3 and stage == 2:
+                        if str(keypoint_classifier_labels[hand_sign_id]) == "ThumbUp":
+                            print("The selected gesture is: " + str(stageOneHandGesture))
+                            #export the information NOW
+                            stopwatchFlag = 0
+                            cap.release()
+                            cv.destroyAllWindows()
+
+                        elif str(keypoint_classifier_labels[hand_sign_id]) == "ThumbDown":
+                            stage = 1
+                            stopwatchFlag = 0
+
+                else:
+                    #if the stages dont match, then raise the incorrect stage flag
+                    incorrectStageFlag = 1
+                    ++antiSpamBuffer
+                    if antiSpamBuffer == 5:
+                        print("IncorrectStageFlag is high. Pick a gesture that works for that specific stage")
+
+                #if there was an incorrect gesture shown, reset the flag and force the user to serve a one second penalty
+                if incorrectStageFlag == 1 and (penaltyStop-penaltyStart) >=1:
+                    incorrectStageFlag = 0
+                oldHandGesture = keypoint_classifier_labels[hand_sign_id]
+
         else:
+            #if there is no gesture, reset the timer, and raise the dropped gesture flag
             point_history.append([0, 0])
+            stopwatchFlag = 0
+            droppedGestureFlag = 1
 
         debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps, mode, number)
@@ -180,7 +280,18 @@ def main():
     cap.release()
     cv.destroyAllWindows()
 
-
+def stage_detection(keypoint_classifier_labels, hand_sign_id):
+    if (keypoint_classifier_labels[hand_sign_id] == "One" or
+            keypoint_classifier_labels[hand_sign_id] == "Two"
+            or keypoint_classifier_labels[hand_sign_id] == "Three" or
+            keypoint_classifier_labels[hand_sign_id] == "Four"):
+        detectedStage = 1
+    elif (keypoint_classifier_labels[hand_sign_id] == "ThumbDown"
+          or keypoint_classifier_labels[hand_sign_id] == "ThumbUp"):
+        detectedStage = 2
+    else:
+        detectedStage = 3
+    return detectedStage
 def select_mode(key, mode):
     number = -1
     if 48 <= key <= 57:  # 0 ~ 9
@@ -192,7 +303,6 @@ def select_mode(key, mode):
     if key == 104:  # h
         mode = 2
     return number, mode
-
 
 def calc_bounding_rect(image, landmarks):
     image_width, image_height = image.shape[1], image.shape[0]
@@ -537,7 +647,6 @@ def draw_info(image, fps, mode, number):
                        cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1,
                        cv.LINE_AA)
     return image
-
 
 if __name__ == '__main__':
     main()
