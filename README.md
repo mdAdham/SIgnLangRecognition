@@ -141,7 +141,8 @@ The model using "LSTM" is as follows. <br>Please change "use_lstm = False" to "T
 * [MediaPipe](https://mediapipe.dev/)
 
 # Author
-Kazuhito Takahashi(https://twitter.com/KzhtTkhs)
+Kazuhito Takahashi(https://twitter.com/KzhtTkhs)<br>
+Mohammad Adham
 
 # Translation and other improvements
 Nikita Kiselov(https://github.com/kinivi)
